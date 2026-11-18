@@ -1,3 +1,5 @@
+using System.IO;
+using System.Reflection;
 using EasInput.Core.Logging;
 using Microsoft.Win32;
 
@@ -40,7 +42,23 @@ public static class Autostart
                     return;
                 }
 
-                key.SetValue(ValueName, $"\"{executable}\"");
+                var command = $"\"{executable}\"";
+                if (string.Equals(
+                        Path.GetFileNameWithoutExtension(executable),
+                        "dotnet",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    // Dev runs are `dotnet easinput.dll`; the Run key needs the DLL as an argument.
+                    var assembly = Assembly.GetEntryAssembly()?.Location;
+                    if (string.IsNullOrEmpty(assembly))
+                    {
+                        return;
+                    }
+
+                    command += $" \"{assembly}\"";
+                }
+
+                key.SetValue(ValueName, command);
             }
             else
             {

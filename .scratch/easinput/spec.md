@@ -124,6 +124,8 @@ key→visible 42.6–68.9ms，avg 57.7ms（**未达标**；主因是 30ms IME �
 `easinput --probe` 打印当前前台窗口的状态/锚点/层级；
 `easinput --calibrate` 渲染 100/150/200% DPI 下的徽标 PNG 供人眼比对。
 
+最近一次验收记录见 [acceptance.md](acceptance.md)（2026-11-18）。
+
 ## 里程碑
 
 - **M1 垂直切片**：经典 Win32 锚点 + 状态源 + 徽标渲染 + 键盘钩子触发。
