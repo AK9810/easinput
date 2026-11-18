@@ -152,6 +152,7 @@ public partial class BubbleWindow : Window
         }
 
         _showing = false;
+        Log.Debug($"Hide: code={Code.Text}");
         var generation = ++_generation;
         var fade = new DoubleAnimation(Opacity, 0, TimeSpan.FromMilliseconds(Math.Max(1, _config.FadeOutMs)))
         {

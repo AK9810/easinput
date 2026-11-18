@@ -22,6 +22,7 @@ public sealed class BubbleController : IDisposable
     private int _reading;
     private int _disposed;
     private InputMode? _lastObserved;
+    private IntPtr _shownFor;
 
     public BubbleController(AppConfig config, BubbleWindow bubble, Dispatcher dispatcher)
     {
@@ -67,17 +68,29 @@ public sealed class BubbleController : IDisposable
 
         if (isDown)
         {
-            _bubble.HideNow();
+            HideBubble();
         }
     }
 
-    public void OnForegroundChanged() => Schedule(50);
+    public void OnForegroundChanged()
+    {
+        HideIfFocusLost(NativeMethods.GetForegroundWindow());
+        Schedule(50);
+    }
+
+    public void OnMinimized(IntPtr hwnd)
+    {
+        if (hwnd == _shownFor)
+        {
+            HideBubble();
+        }
+    }
 
     public void OnEnabledChanged()
     {
         if (!_config.Enabled)
         {
-            Post(() => _bubble.HideNow());
+            Post(HideBubble);
         }
     }
 
@@ -118,18 +131,14 @@ public sealed class BubbleController : IDisposable
 
             if (!_config.Enabled)
             {
-                if (_bubble.IsShowing)
-                {
-                    Post(() => _bubble.HideNow());
-                }
-
+                Post(HideBubble);
                 return;
             }
 
             var foreground = NativeMethods.GetForegroundWindow();
             if (!TryReadMode(foreground, out var mode))
             {
-                Post(() => _bubble.HideNow());
+                Post(HideBubble);
                 return;
             }
 
@@ -164,6 +173,15 @@ public sealed class BubbleController : IDisposable
 
     private void Apply(InputMode mode, IntPtr foreground)
     {
+        HideIfFocusLost(foreground);
+
+        // A minimized window has no usable anchor; the poll may still read its IME state.
+        if (NativeMethods.IsIconic(foreground))
+        {
+            HideBubble();
+            return;
+        }
+
         if (_lastObserved == mode)
         {
             return;
@@ -174,12 +192,27 @@ public sealed class BubbleController : IDisposable
         var anchor = _anchors.Resolve(foreground);
         if (anchor.Tier == AnchorTier.Hidden)
         {
-            _bubble.HideNow();
+            HideBubble();
             return;
         }
 
         var workArea = WorkArea.Get(anchor.Rect.Left, anchor.Rect.Top);
+        _shownFor = foreground;
         _bubble.ShowAt(anchor.Rect, mode, _config.ShortCodes.For(mode), _config, workArea);
+    }
+
+    private void HideIfFocusLost(IntPtr foreground)
+    {
+        if (_bubble.IsShowing && foreground != _shownFor)
+        {
+            HideBubble();
+        }
+    }
+
+    private void HideBubble()
+    {
+        _shownFor = IntPtr.Zero;
+        _bubble.HideNow();
     }
 
     private bool TryReadMode(IntPtr foreground, out InputMode mode)

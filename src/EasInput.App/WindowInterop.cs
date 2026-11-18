@@ -10,7 +10,6 @@ internal static class WindowInterop
     private const int WmSysKeyDown = 0x0104;
     private const int WmSysKeyUp = 0x0105;
     private const uint WineventOutofcontext = 0x0000;
-    private const uint EventSystemForeground = 0x0003;
 
     internal delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -54,10 +53,19 @@ internal static class WindowInterop
 
     internal static class ForegroundHook
     {
-        public static IntPtr Install(WinEventDelegate callback)
+        private const uint EventSystemForeground = 0x0003;
+        public const uint EventSystemMinimizeStart = 0x0016;
+
+        public static IntPtr Install(WinEventDelegate callback) =>
+            InstallFor(EventSystemForeground, callback);
+
+        public static IntPtr InstallMinimize(WinEventDelegate callback) =>
+            InstallFor(EventSystemMinimizeStart, callback);
+
+        private static IntPtr InstallFor(uint eventType, WinEventDelegate callback)
         {
             return SetWinEventHook(
-                EventSystemForeground, EventSystemForeground, IntPtr.Zero, callback, 0, 0, WineventOutofcontext);
+                eventType, eventType, IntPtr.Zero, callback, 0, 0, WineventOutofcontext);
         }
     }
 }
