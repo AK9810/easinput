@@ -23,6 +23,7 @@ public sealed class BubbleController : IDisposable
     private int _disposed;
     private InputMode? _lastObserved;
     private IntPtr _shownFor;
+    private long _keyTimestamp;
 
     public BubbleController(AppConfig config, BubbleWindow bubble, Dispatcher dispatcher)
     {
@@ -46,11 +47,12 @@ public sealed class BubbleController : IDisposable
         _poll.Change(300, 300);
     }
 
-    public void OnKey(int virtualKey, bool isDown)
+    public void OnKey(int virtualKey, bool isDown, long timestamp)
     {
         if (virtualKey == NativeMethods.VkCapital && isDown)
         {
             _caps.OnKeyDown(virtualKey);
+            _keyTimestamp = timestamp;
             Schedule(10);
             return;
         }
@@ -60,6 +62,7 @@ public sealed class BubbleController : IDisposable
             if (!isDown)
             {
                 // The IME toggle lands on key-up; give the IME a moment to update its state.
+                _keyTimestamp = timestamp;
                 Schedule(30);
             }
 
@@ -74,6 +77,8 @@ public sealed class BubbleController : IDisposable
 
     public void OnForegroundChanged()
     {
+        // A pending key sample belongs to the old foreground; don't attribute it to this show.
+        _keyTimestamp = 0;
         HideIfFocusLost(NativeMethods.GetForegroundWindow());
         Schedule(50);
     }
@@ -198,7 +203,8 @@ public sealed class BubbleController : IDisposable
 
         var workArea = WorkArea.Get(anchor.Rect.Left, anchor.Rect.Top);
         _shownFor = foreground;
-        _bubble.ShowAt(anchor.Rect, mode, _config.ShortCodes.For(mode), _config, workArea);
+        _bubble.ShowAt(anchor.Rect, mode, _config.ShortCodes.For(mode), _config, workArea, _keyTimestamp);
+        _keyTimestamp = 0;
     }
 
     private void HideIfFocusLost(IntPtr foreground)

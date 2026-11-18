@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -84,7 +85,13 @@ public partial class BubbleWindow : Window
         return bitmap;
     }
 
-    public void ShowAt(PixelRect anchor, InputMode mode, string code, AppConfig config, PixelRect workArea)
+    public void ShowAt(
+        PixelRect anchor,
+        InputMode mode,
+        string code,
+        AppConfig config,
+        PixelRect workArea,
+        long keyTimestamp = 0)
     {
         _config = config;
         ApplyStyle(config, mode);
@@ -114,11 +121,6 @@ public partial class BubbleWindow : Window
             Show();
         }
 
-        Log.Debug(
-            $"Show: code={code} anchor={anchor.Left},{anchor.Top},{anchor.Right},{anchor.Bottom} " +
-            $"scale={scale} pill={pillWidth}x{pillHeight} target={target.Left},{target.Top} " +
-            $"window={target.Left - padding},{target.Top - padding} visible={IsVisible}");
-
         var moved = NativeMethods.SetWindowPos(
             hwnd,
             NativeMethods.HWND_TOPMOST,
@@ -127,6 +129,17 @@ public partial class BubbleWindow : Window
             0,
             0,
             NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
+
+        if (keyTimestamp != 0)
+        {
+            var elapsedMs = (Stopwatch.GetTimestamp() - keyTimestamp) * 1000.0 / Stopwatch.Frequency;
+            Log.Debug($"Latency: {elapsedMs:F1}ms (key->visible)");
+        }
+
+        Log.Debug(
+            $"Show: code={code} anchor={anchor.Left},{anchor.Top},{anchor.Right},{anchor.Bottom} " +
+            $"scale={scale} pill={pillWidth}x{pillHeight} target={target.Left},{target.Top} " +
+            $"window={target.Left - padding},{target.Top - padding} visible={IsVisible}");
 
         NativeMethods.GetWindowRect(hwnd, out var actual);
         Log.Debug(

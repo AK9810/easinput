@@ -8,6 +8,12 @@ public static class KeyKinds
         virtualKey is NativeMethods.VkShift
             or NativeMethods.VkControl
             or NativeMethods.VkMenu
+            or NativeMethods.VkLShift
+            or NativeMethods.VkRShift
+            or NativeMethods.VkLControl
+            or NativeMethods.VkRControl
+            or NativeMethods.VkLMenu
+            or NativeMethods.VkRMenu
             or NativeMethods.VkLWin
             or NativeMethods.VkRWin;
 }

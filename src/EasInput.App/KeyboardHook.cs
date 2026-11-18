@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
 using EasInput.Core;
@@ -47,9 +48,11 @@ public sealed class KeyboardHook : IDisposable
                 var virtualKey = Marshal.ReadInt32(lParam);
                 if (ShouldNotify(virtualKey, isDown))
                 {
+                    // Timestamp before the dispatcher hop so the measurement covers the whole path.
+                    var timestamp = Stopwatch.GetTimestamp();
                     _dispatcher.BeginInvoke(
                         DispatcherPriority.Input,
-                        () => _controller.OnKey(virtualKey, isDown));
+                        () => _controller.OnKey(virtualKey, isDown, timestamp));
                 }
             }
         }

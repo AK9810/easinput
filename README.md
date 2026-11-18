@@ -48,6 +48,7 @@ dotnet publish src/EasInput.App -c Release -r win-x64 --self-contained -p:Publis
   首次查询某个应用有约 300ms 的 UIA 冷启动）。只读网页/PDF 会被判定为无插入符，继续降级。
 - 全角/半角、中英标点、输入法显示名：不显示。
 - 混合 DPI 多屏下的定位只做了基本处理，尚未逐屏验证。
+- 按键→显示实测 avg 57.7ms（Debug / 12 逻辑核），高于 50ms 预算；空闲总 CPU 0.039%、私有内存 71.9MB。
 
 ## 文档
 
