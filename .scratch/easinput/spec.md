@@ -10,7 +10,7 @@ Windows 上的输入模式提示器：在文本插入符下方显示一个瞬时
 ## 目标
 
 1. 在任何能拿到插入符的应用里，切换中/英或 CapsLock 时，插入符下方出现一个 23pt 高的药丸徽标。
-2. 徽标的几何、位置、阴影、动效按 macOS Sonoma 的实测值 1:1。
+2. 徽标的几何、位置、阴影、动效按 macOS Sonoma 的实测值 1:1 标定；字体与阴影的最终值以本机实测校准为准（见视觉规格表）。
 3. 拿不到插入符时逐级降级，绝不出现"飘在无关位置"的徽标。
 4. 单文件便携，零安装、零运行时依赖、零第三方库。
 
@@ -65,15 +65,17 @@ v1 实现 1、3、4；2 在 v1.1 补齐。
 
 ## 视觉规格
 
+> 字体与阴影为本机实测标定值；与 macOS 原始测量值的差异及理由见 ADR-0004。
+
 | 项 | 值 |
 |---|---|
 | 高度 | 23 DIP |
 | 圆角 | 11.5 DIP（= 高度/2） |
 | 填充 | `#007AFF` |
-| 短代码 | 白色，Segoe UI Variable Display Semibold，13 DIP |
-| 水平内边距 | 8.5 DIP（校准到「拼」总宽 ≈ 30 DIP） |
+| 短代码 | 白色，Segoe UI Variable Display，12 DIP；中文 Normal、拉丁 SemiBold（CJK 回退字重偏重，按实测校准） |
+| 水平内边距 | 0.39 × 高度（23 DIP 高时 ≈ 8.97 DIP），校准到「拼」总宽 ≈ 30 DIP |
 | 锚点 | 插入符矩形下方 3 DIP，水平居中于插入符中心 |
-| 阴影 | 向下 2 DIP，模糊 10 DIP，黑 20% |
+| 阴影 | 向下 2 DIP，模糊 9 DIP，黑 15%（本机 125% 缩放下实测校准） |
 | 入场 | 120ms 淡入 |
 | 停留 | 1000ms |
 | 出场 | 200ms 淡出 |
@@ -96,7 +98,7 @@ v1 实现 1、3、4；2 在 v1.1 补齐。
   "pillHeight": 23,
   "pillColor": "#007AFF",
   "fontFamily": "Segoe UI Variable Display",
-  "fontSize": 13,
+  "fontSize": 12,
   "shortCodes": { "chinese": "拼", "latinLower": "a", "latinUpper": "A" },
   "autostart": false,
   "logLevel": "warn",

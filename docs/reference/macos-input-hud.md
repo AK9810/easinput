@@ -3,6 +3,9 @@
 本文记录"1:1 复刻"的目标值。数值来自 Sonoma 14 的 2× 截图实测、Apple 官方 2× 素材、
 WWDC23 与 AppKit 文档；不确定的项单独标注。
 
+> 本文是 macOS 的目标值；Windows 实现因字体回退与 DPI 校准后的最终值见
+> [spec 视觉表](../../.scratch/easinput/spec.md) 与 [ADR-0004](../adr/0004-visual-language-and-semantics.md)。
+
 参考素材：
 - 有徽标：`https://raw.githubusercontent.com/yannbertrand/macos-defaults/main/docs/keyboard/images/toggle-language-indicator/on.png`
 - 无徽标（对照）：同目录 `off.png`

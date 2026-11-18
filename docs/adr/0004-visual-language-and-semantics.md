@@ -2,7 +2,7 @@
 
 **Status**: accepted (2026-11-17)
 
-Sonoma 的光标配件（`NSTextInsertionIndicator` 的 cursor accessory）几何参数已实测：23pt 高药丸、圆角 = 高度/2、系统蓝纯色填充、插入符正下方水平居中、间距约 3pt、柔和阴影、淡入淡出。这些参数全部 1:1 采用。
+Sonoma 的光标配件（`NSTextInsertionIndicator` 的 cursor accessory）几何参数已实测：23pt 高药丸、圆角 = 高度/2、系统蓝纯色填充、插入符正下方水平居中、间距约 3pt、柔和阴影、淡入淡出。几何参数 1:1 采用；字体与阴影按本机渲染实测校准（见 Consequences）。
 
 但语义不 1:1：macOS 的徽标只表达输入源身份（同一输入法内切中英，徽标不变），大小写靠另一个常驻的 ⇪ 徽标表达。本项目存在的理由恰恰是显示"中文 / 英文小写 / 英文大写"三态，所以：中文态显示短代码「拼」，英文小写「a」，英文大写「A」；CapsLock 折进「A」，不做独立的常驻 ⇪；徽标贴在插入符下方，任何非修饰键按下立即消失，否则 1 秒后淡出。
 
@@ -11,4 +11,5 @@ Sonoma 的光标配件（`NSTextInsertionIndicator` 的 cursor accessory）几�
 - 中文态只有「拼」一个字形，无法从徽标看出装的是哪个中文输入法；多输入法靠短代码映射区分，映射表放配置里可覆盖。
 - 不做可点击的 ⇪ 徽标，覆盖层保持全窗口点击穿透，实现简单且不会误吞点击。
 - "打字即消失"偏离 macOS（它打字不消失），但 Windows 的候选窗就在插入符下方，不这样会压住候选字。
-- SF Pro 不能合法用于 Windows（Apple 字体许可禁止在非 Apple 系统使用或嵌入），改用 Segoe UI Variable；单个字形在 13pt 下的差异不可辨。
+- SF Pro 不能合法用于 Windows（Apple 字体许可禁止在非 Apple 系统使用或嵌入），改用 Segoe UI Variable。Segoe UI Variable 没有 CJK 字形，中文回退微软雅黑、比 PingFang 略重，因此中文用 Normal 字重、拉丁用 SemiBold；字号取 12 DIP（13 DIP 在 23 DIP 药丸里墨迹占高偏大）。
+- 2026-11-18 实测标定：药丸 29.6×23.2 DIP（参考 30×23），字形墨迹占高 44.8%（参考 43.5%）；阴影 Blur 9 / Opacity 0.15（参考 10 / 0.20，本机 125% 缩放下偏重）。标定值已写回 spec 视觉表；这是对 macOS 测量值的有意校准，不是疏漏。
