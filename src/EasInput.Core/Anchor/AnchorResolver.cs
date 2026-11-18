@@ -1,0 +1,128 @@
+using EasInput.Core.Interop;
+
+namespace EasInput.Core;
+
+public interface ICaretLocator
+{
+    bool TryLocate(IntPtr foregroundWindow, out PixelRect caret);
+}
+
+/// <summary>
+/// Tier 1: the classic Win32 caret. <c>rcCaret</c> is in the client coordinates of
+/// <c>hwndCaret</c>, so it must be mapped to the screen. A rect that falls outside its own window
+/// is treated as stale (some apps never clear it).
+/// </summary>
+public sealed class Win32CaretLocator : ICaretLocator
+{
+    public bool TryLocate(IntPtr foregroundWindow, out PixelRect caret)
+    {
+        caret = default;
+        if (foregroundWindow == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        var info = GUITHREADINFO.Create();
+        if (!NativeMethods.GetGUIThreadInfo(0, ref info) || info.hwndCaret == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        var local = info.rcCaret;
+        if (local.Right <= local.Left || local.Bottom <= local.Top)
+        {
+            return false;
+        }
+
+        var topLeft = new POINT { X = local.Left, Y = local.Top };
+        var bottomRight = new POINT { X = local.Right, Y = local.Bottom };
+        if (!NativeMethods.ClientToScreen(info.hwndCaret, ref topLeft) ||
+            !NativeMethods.ClientToScreen(info.hwndCaret, ref bottomRight))
+        {
+            return false;
+        }
+
+        var rect = PixelRect.FromLtrb(topLeft.X, topLeft.Y, bottomRight.X, bottomRight.Y);
+        if (!NativeMethods.GetWindowRect(info.hwndCaret, out var window))
+        {
+            return false;
+        }
+
+        var windowRect = PixelRect.FromRect(window);
+        if (rect.Right <= windowRect.Left || rect.Left >= windowRect.Right ||
+            rect.Bottom <= windowRect.Top || rect.Top >= windowRect.Bottom)
+        {
+            return false;
+        }
+
+        caret = rect;
+        return true;
+    }
+}
+
+public static class PointerLocator
+{
+    /// <summary>
+    /// Tier 3: the pointer, but only while it is inside the focus window. Anchoring to a pointer
+    /// that wandered off to another window would put the bubble in a place unrelated to typing.
+    /// </summary>
+    public static bool TryLocate(IntPtr foregroundWindow, out PixelRect pointer)
+    {
+        pointer = default;
+        if (foregroundWindow == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        if (!NativeMethods.GetCursorPos(out var position) ||
+            !NativeMethods.GetWindowRect(foregroundWindow, out var window))
+        {
+            return false;
+        }
+
+        var rect = PixelRect.FromRect(window);
+        if (!rect.Contains(position.X, position.Y))
+        {
+            return false;
+        }
+
+        pointer = PixelRect.FromLtrb(position.X, position.Y, position.X + 1, position.Y + 1);
+        return true;
+    }
+}
+
+/// <summary>
+/// Tiers in order: Win32 caret → UIA text caret → pointer inside the focus window → hidden.
+/// UIA is optional until the long-tail milestone lands. See ADR-0003.
+/// </summary>
+public sealed class AnchorResolver
+{
+    private readonly ICaretLocator _caret;
+    private readonly ICaretLocator? _uia;
+
+    public AnchorResolver(ICaretLocator caret, ICaretLocator? uia = null)
+    {
+        _caret = caret;
+        _uia = uia;
+    }
+
+    public Anchor Resolve(IntPtr foregroundWindow)
+    {
+        if (_caret.TryLocate(foregroundWindow, out var caret))
+        {
+            return new Anchor(AnchorTier.Caret, caret);
+        }
+
+        if (_uia is not null && _uia.TryLocate(foregroundWindow, out var uiaCaret))
+        {
+            return new Anchor(AnchorTier.Uia, uiaCaret);
+        }
+
+        if (PointerLocator.TryLocate(foregroundWindow, out var pointer))
+        {
+            return new Anchor(AnchorTier.Pointer, pointer);
+        }
+
+        return Anchor.Hidden;
+    }
+}

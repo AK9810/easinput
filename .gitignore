@@ -1,0 +1,12 @@
+# .NET build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Publish output
+publish/
+
+# Local reference screenshots and captures (third-party images, large)
+.scratch/ref/
