@@ -1,6 +1,6 @@
 # easinput
 
-[![协议](https://img.shields.io/github/license/AK9810/easinput?label=%E5%8D%8F%E8%AE%AE)](https://github.com/AK9810/easinput/blob/main/LICENSE)
+[![协议](https://img.shields.io/github/license/AK9810/easinput?label=%E5%8D%8F%E8%AE%AE&logo=gnu)](https://github.com/AK9810/easinput/blob/main/LICENSE)
 [![版本](https://img.shields.io/github/v/release/AK9810/easinput?include_prereleases&label=%E7%89%88%E6%9C%AC)](https://github.com/AK9810/easinput/releases/latest)
 ![语言](https://img.shields.io/badge/%E8%AF%AD%E8%A8%80-C%23%20.NET%208-512BD4?logo=dotnet&logoColor=white)
 ![单文件](https://img.shields.io/badge/%E5%8D%95%E6%96%87%E4%BB%B6-66%20MB-007AFF)
