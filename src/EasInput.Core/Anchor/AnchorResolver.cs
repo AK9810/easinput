@@ -64,13 +64,13 @@ public sealed class Win32CaretLocator : ICaretLocator
     }
 }
 
-public static class PointerLocator
+public sealed class PointerLocator : ICaretLocator
 {
     /// <summary>
     /// Tier 3: the pointer, but only while it is inside the focus window. Anchoring to a pointer
     /// that wandered off to another window would put the bubble in a place unrelated to typing.
     /// </summary>
-    public static bool TryLocate(IntPtr foregroundWindow, out PixelRect pointer)
+    public bool TryLocate(IntPtr foregroundWindow, out PixelRect pointer)
     {
         pointer = default;
         if (foregroundWindow == IntPtr.Zero)
@@ -97,17 +97,19 @@ public static class PointerLocator
 
 /// <summary>
 /// Tiers in order: Win32 caret → UIA text caret → pointer inside the focus window → hidden.
-/// UIA is optional until the long-tail milestone lands. See ADR-0003.
+/// See ADR-0003.
 /// </summary>
 public sealed class AnchorResolver
 {
     private readonly ICaretLocator _caret;
     private readonly ICaretLocator? _uia;
+    private readonly ICaretLocator _pointer;
 
-    public AnchorResolver(ICaretLocator caret, ICaretLocator? uia = null)
+    public AnchorResolver(ICaretLocator caret, ICaretLocator? uia = null, ICaretLocator? pointer = null)
     {
         _caret = caret;
         _uia = uia;
+        _pointer = pointer ?? new PointerLocator();
     }
 
     public Anchor Resolve(IntPtr foregroundWindow)
@@ -122,7 +124,7 @@ public sealed class AnchorResolver
             return new Anchor(AnchorTier.Uia, uiaCaret);
         }
 
-        if (PointerLocator.TryLocate(foregroundWindow, out var pointer))
+        if (_pointer.TryLocate(foregroundWindow, out var pointer))
         {
             return new Anchor(AnchorTier.Pointer, pointer);
         }

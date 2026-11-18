@@ -13,7 +13,7 @@ public sealed class BubbleController : IDisposable
     private readonly AppConfig _config;
     private readonly BubbleWindow _bubble;
     private readonly Dispatcher _dispatcher;
-    private readonly AnchorResolver _anchors = new(new Win32CaretLocator());
+    private readonly AnchorResolver _anchors = new(new Win32CaretLocator(), new UiaCaretLocator());
     private readonly IImeStateSource _ime = new Win32ImeStateSource();
     private readonly CapsLockTracker _caps = new();
     private readonly System.Threading.Timer _poll;

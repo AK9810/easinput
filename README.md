@@ -42,8 +42,8 @@ dotnet publish src/EasInput.App -c Release -r win-x64 --self-contained -p:Publis
 ## 已知限制
 
 - 提权窗口（UIPI）、UAC 安全桌面、独占全屏游戏、锁屏：不支持。
-- Chromium/WinUI3/Office/Terminal 的插入符目前只走 Win32 caret 路径，可能不准；
-  UIA `TextPattern` 兜底是下一个里程碑。
+- Chromium/WinUI3/Office/Terminal 的插入符走 UIA `TextPattern` 兜底（Chromium 系已验证；
+  首次查询某个应用有约 300ms 的 UIA 冷启动）。只读网页/PDF 会被判定为无插入符，继续降级。
 - 全角/半角、中英标点、输入法显示名：不显示。
 - 混合 DPI 多屏下的定位只做了基本处理，尚未逐屏验证。
 

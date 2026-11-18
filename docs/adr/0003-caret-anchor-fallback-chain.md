@@ -9,3 +9,10 @@
 - UIA 是跨进程调用，可能被卡住的应用拖住：必须在工作线程上带超时调用，超时即视为"无插入符"。
 - 退化 range 的 `GetBoundingRectangles` 可能返回空数组；取插入符需把 range 扩一个字符再读 `rect[0]`。
 - 明确不做远程线程注入（InputTip 的做法）：它能多覆盖一部分 Qt/Java 应用，但会引入杀软误报与反作弊风险，收益不值得。
+
+**Implementation notes (2026-11-18)**:
+- 只查 `AutomationElement.FocusedElement`，不回退到窗口根元素：避免把只读网页的选区当成插入符。
+- `TextPattern.IsReadOnlyAttribute == true` 时视为无插入符——网页/PDF 有选区，但没有文本插入符。
+- 选区先 `MoveEndpointByRange` 折叠到末端再取矩形；折叠后仍为空时扩一个字符取 `rect[0]`。
+- 首次查询某个进程给 300ms（UIA provider 冷启动，VS Code 实测 >100ms），之后 100ms；超时即降级到指针。
+- 返回的矩形必须与前台窗口矩形相交，否则视为无效。

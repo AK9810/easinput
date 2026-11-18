@@ -39,8 +39,9 @@ Windows 上的输入模式提示器：在文本插入符下方显示一个瞬时
 带 `SMTO_ABORTIFHUNG`，超时 20ms。有 `ImmGetContext` 时用 `ImmGetConversionStatus` 补充。
 CapsLock 用 `GetKeyState(VK_CAPITAL) & 1`，并以低级键盘钩子的边沿计数校正。
 
-短代码由输入法身份推导：`HKLM\SOFTWARE\Microsoft\CTF\TIP\{CLSID}\LanguageProfile\<langid>\{profile}`
-的 `Description` / `Display Description`。拼音类 → 「拼」；其他 → 本地化名称首字；配置可覆盖。
+短代码 v1 默认取「拼」/「a」/「A」，映射表在配置里可覆盖。按输入法身份自动推导
+（`HKLM\SOFTWARE\Microsoft\CTF\TIP\{CLSID}\LanguageProfile\<langid>\{profile}` 的
+`Description` / `Display Description`；拼音类 → 「拼」，其他 → 本地化名称首字）排 v1.1。
 
 ## 锚点降级
 
@@ -51,7 +52,7 @@ CapsLock 用 `GetKeyState(VK_CAPITAL) & 1`，并以低级键盘钩子的边沿�
 3. 指针：`GetCursorPos`，仅当指针位于焦点窗口矩形内。
 4. 隐藏。
 
-v1 实现 1、3、4；2 在 v1.1 补齐。
+实现 1、2、3、4。
 
 ## 触发与生命周期
 
@@ -124,5 +125,5 @@ Word、ZCode、微信输入法自身输入框。
 
 - **M1 垂直切片**：经典 Win32 锚点 + 状态源 + 徽标渲染 + 键盘钩子触发。
 - **M2 外壳**：托盘、配置、单实例、开机自启、日志、`--probe`。
-- **M3 长尾**：UIA 锚点（Chromium/WinUI3/Office/Terminal）、`--calibrate`、验收矩阵跑通。
+- **M3 长尾**：UIA 锚点（已落地，Chromium 系验证）、`--calibrate`、验收矩阵跑通。
 - **M4 打磨**：视觉校准、性能测量、README 与截图。
