@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using EasInput.Core;
 using EasInput.Core.Interop;
@@ -52,6 +53,35 @@ public partial class BubbleWindow : Window
         Hide();
         ApplyExtendedStyles();
         Log.Debug($"Warm: hwnd=0x{new WindowInteropHelper(this).Handle.ToInt64():X} size={ActualWidth}x{ActualHeight}");
+    }
+
+    /// <summary>
+    /// Renders the live visual tree at <paramref name="scale"/> for <c>--calibrate</c>. This is the
+    /// same <see cref="Root"/> grid the overlay uses, so the PNG shows exactly what the window
+    /// would show, including the shadow padding.
+    /// </summary>
+    internal BitmapSource Render(InputMode mode, string code, AppConfig config, double scale)
+    {
+        _config = config;
+        ApplyStyle(config, mode);
+        Code.Text = code;
+
+        Root.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var desired = Root.DesiredSize;
+        Root.Arrange(new Rect(desired));
+        Root.UpdateLayout();
+
+        var pixelWidth = Math.Max(1, DpiScale.Ceil(desired.Width, scale));
+        var pixelHeight = Math.Max(1, DpiScale.Ceil(desired.Height, scale));
+        var bitmap = new RenderTargetBitmap(
+            pixelWidth,
+            pixelHeight,
+            96 * scale,
+            96 * scale,
+            PixelFormats.Pbgra32);
+        bitmap.Render(Root);
+        bitmap.Freeze();
+        return bitmap;
     }
 
     public void ShowAt(PixelRect anchor, InputMode mode, string code, AppConfig config, PixelRect workArea)

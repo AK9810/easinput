@@ -41,6 +41,13 @@ public partial class App : Application
             return;
         }
 
+        if (e.Args.Any(a => a.Equals("--calibrate", StringComparison.OrdinalIgnoreCase)))
+        {
+            CalibrateMode.Run();
+            Shutdown();
+            return;
+        }
+
         _mutex = new Mutex(initiallyOwned: true, @"Local\easinput.singleton", out var createdNew);
         _ownsMutex = createdNew;
         if (!createdNew)

@@ -32,6 +32,8 @@ dotnet publish src/EasInput.App -c Release -r win-x64 --self-contained -p:Publis
 
 - `--probe`：打印当前前台窗口的 IME 状态、锚点层级与计算出的气泡位置。排查"某个应用里不显示"先用它。
 - `--demo=拼|a|A [--demo-at=x,y | --demo-rect=x1,y1,x2,y2]`：在指定锚点显示 4 秒，用于视觉校准。
+- `--calibrate`：在当前目录渲染中文「拼」的徽标 PNG（`calibrate-100.png` / `calibrate-150.png` /
+  `calibrate-200.png`），打印每个文件的绝对路径与像素尺寸，用于人眼比对 100%/150%/200% DPI。
 - 配置：`config.json` 放在 exe 同目录（便携模式），否则用 `%APPDATA%\easinput\config.json`。
 - 日志：`%APPDATA%\easinput\easinput.log`，把 `logLevel` 改成 `debug` 可看到每次状态读取与锚点降级。
 

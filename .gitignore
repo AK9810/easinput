@@ -10,3 +10,6 @@ publish/
 
 # Local reference screenshots and captures (third-party images, large)
 .scratch/ref/
+
+# --calibrate output
+calibrate-*.png
