@@ -13,33 +13,34 @@ Windows 上的输入模式提示器：在文本插入符下方显示一个瞬时
 macOS 的徽标只表达输入源身份（同一输入法内切中英不变），大小写靠独立的常驻 ⇪ 徽标；
 本项目显示的是**输入模式**，并把 CapsLock 折进「A」。详见 [ADR-0004](docs/adr/0004-visual-language-and-semantics.md)。
 
-## 构建与运行
+## 下载与运行
 
-需要 .NET 8 SDK。
+从 [Releases](https://github.com/AK9810/easinput/releases/latest) 下载 `easinput-v0.1.0-win-x64.exe`
+（单文件约 66MB，自包含，Windows 10/11 x64，无需安装 .NET），双击运行。
 
-```bash
-dotnet build easinput.sln
-dotnet run --project src/EasInput.App
-```
+程序没有主窗口，图标在任务栏右下角的托盘溢出区（`^`）里。首次运行会被 SmartScreen 拦：
+点「更多信息」→「仍要运行」。
 
-发布单文件（自包含，目标机器无需安装 .NET）：
+右键托盘图标可用：
 
-```bash
-dotnet publish src/EasInput.App -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
-```
+- 启用提示
+- 开机自启
+- 预览效果
+- 打开配置文件
+- 退出
 
-## 调试
+首次启动会弹一次系统通知，说明程序在托盘运行；之后不再弹。
 
-- `--probe`：打印当前前台窗口的 IME 状态、锚点层级与计算出的气泡位置。排查"某个应用里不显示"先用它。
-- `--demo=拼|a|A [--demo-at=x,y | --demo-rect=x1,y1,x2,y2]`：在指定锚点显示 4 秒，用于视觉校准。
-- `--calibrate`：在当前目录渲染中文「拼」的徽标 PNG（`calibrate-100.png` / `calibrate-150.png` /
-  `calibrate-200.png`），打印每个文件的绝对路径与像素尺寸，用于人眼比对 100%/150%/200% DPI。
-- 配置：`config.json` 放在 exe 同目录（便携模式），否则用 `%APPDATA%\easinput\config.json`。
-- 日志：`%APPDATA%\easinput\easinput.log`，把 `logLevel` 改成 `debug` 可看到每次状态读取与锚点降级。
+## 升级
 
-## 托盘
+先在托盘菜单里退出，再用新 exe 覆盖旧文件。程序运行时会占用 exe，直接覆盖会失败。
 
-退出、暂停/恢复、开机自启、打开配置文件。v1 没有设置窗口，JSON 就是设置界面。
+## 配置
+
+- 便携优先：`config.json` 放在 exe 同目录时使用该文件，否则使用 `%APPDATA%\easinput\config.json`。
+- 日志：`%APPDATA%\easinput\easinput.log`。把 `logLevel` 改成 `debug`，可看到每次状态读取与锚点降级。
+- `firstRunShown`：首次运行提示是否已展示；改回 `false` 可重看提示。
+- v1 没有设置窗口，JSON 就是设置界面。
 
 ## 已知限制
 
@@ -49,6 +50,44 @@ dotnet publish src/EasInput.App -c Release -r win-x64 --self-contained -p:Publis
 - 全角/半角、中英标点、输入法显示名：不显示。
 - 混合 DPI 多屏下的定位只做了基本处理，尚未逐屏验证。
 - 按键→显示实测 avg 57.7ms（Debug / 12 逻辑核），高于 50ms 预算；空闲总 CPU 0.039%、私有内存 71.9MB。
+- exe 未签名，首次运行需通过 SmartScreen。
+
+## 开发者
+
+需要 .NET 8 SDK。
+
+### 构建与运行
+
+```bash
+dotnet build easinput.sln
+dotnet run --project src/EasInput.App
+```
+
+### 调试
+
+- `--probe`：打印当前前台窗口的 IME 状态、锚点层级与计算出的气泡位置。排查"某个应用里不显示"先用它。
+- `--preview`：立刻在光标处显示一次气泡（与托盘菜单的「预览效果」同一条路径），4 秒后退出。
+- `--demo=拼|a|A [--demo-at=x,y | --demo-rect=x1,y1,x2,y2]`：在指定锚点显示 4 秒，用于视觉校准。
+- `--calibrate`：在当前目录渲染中文「拼」的徽标 PNG（`calibrate-100.png` / `calibrate-150.png` /
+  `calibrate-200.png`），打印每个文件的绝对路径与像素尺寸，用于人眼比对 100%/150%/200% DPI。
+
+### 发布单文件
+
+自包含，目标机器无需安装 .NET：
+
+```bash
+dotnet publish src/EasInput.App -c Release -r win-x64 --self-contained \
+  -p:PublishSingleFile=true \
+  -p:IncludeNativeLibrariesForSelfExtract=true \
+  -p:EnableCompressionInSingleFile=true \
+  -p:DebugType=none \
+  -o publish
+```
+
+产物是单个 `publish/easinput.exe`（约 66MB）。只写 `PublishSingleFile=true` 是不够的：WPF 的 5 个原生
+DLL（`wpfgfx_cor3`、`PresentationNative_cor3` 等）默认留在 exe 旁边，一共 6 个文件约 140MB。
+`IncludeNativeLibrariesForSelfExtract` 把它们也塞进 exe，首次启动解压到 `%TEMP%\.net\easinput\`。
+exe 未签名，首次下载运行会被 SmartScreen 拦一下。
 
 ## 文档
 
