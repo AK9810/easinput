@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Threading;
 using EasInput.Core;
 using EasInput.Core.Interop;
@@ -52,8 +53,8 @@ public partial class App : Application
         _ownsMutex = createdNew;
         if (!createdNew)
         {
-            Log.Info("Another instance is already running; exiting.");
-            Shutdown();
+            Log.Info("Another instance is already running; showing a hint and exiting.");
+            NotifyAlreadyRunning();
             return;
         }
 
@@ -98,10 +99,32 @@ public partial class App : Application
                 Autostart.Set(autostart);
                 ConfigStore.Save(_configPath, _config);
             },
+            _controller.Preview,
             OpenConfig,
             Shutdown);
 
         Log.Info($"Started. Config: {_configPath}");
+
+        if (e.Args.Any(a => a.Equals("--preview", StringComparison.OrdinalIgnoreCase)))
+        {
+            _controller.Preview(NativeMethods.GetForegroundWindow());
+            var quit = new DispatcherTimer(
+                TimeSpan.FromSeconds(4),
+                DispatcherPriority.Normal,
+                (_, _) => Shutdown(),
+                Dispatcher);
+            quit.Start();
+        }
+
+        if (!_config.FirstRunShown)
+        {
+            _tray.Notify(
+                "easinput 已启动",
+                "提示会出现在光标下方。右键托盘图标可预览效果、开机自启或退出。");
+            _config.FirstRunShown = true;
+            ConfigStore.Save(_configPath, _config);
+            Log.Info("First-run hint shown.");
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -123,6 +146,40 @@ public partial class App : Application
 
         Log.Info("Exited.");
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// A second launch has no window to show, so a temporary tray balloon is the only feedback.
+    /// The timer keeps this process alive long enough for the balloon to appear.
+    /// </summary>
+    private void NotifyAlreadyRunning()
+    {
+        var icon = TrayIcon.CreateIcon(_config, out var iconHandle);
+        var notify = new NotifyIcon
+        {
+            Icon = icon,
+            Text = "easinput",
+            Visible = true,
+        };
+
+        notify.ShowBalloonTip(
+            5000,
+            "easinput 已在运行",
+            "它已经在后台工作，右键托盘图标可预览或退出。",
+            ToolTipIcon.Info);
+
+        var timer = new DispatcherTimer(
+            TimeSpan.FromSeconds(3),
+            DispatcherPriority.Normal,
+            (_, _) =>
+            {
+                notify.Visible = false;
+                notify.Dispose();
+                TrayIcon.DestroyIconHandle(iconHandle);
+                Shutdown();
+            },
+            Dispatcher);
+        timer.Start();
     }
 
     private void RunDemo(string[] args)

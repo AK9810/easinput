@@ -26,6 +26,9 @@ public sealed class AppConfig
 
     public bool Autostart { get; set; }
 
+    /// <summary>Whether the first-run hint has already been shown.</summary>
+    public bool FirstRunShown { get; set; }
+
     public string LogLevel { get; set; } = "warn";
 
     public AppConfig Normalize()

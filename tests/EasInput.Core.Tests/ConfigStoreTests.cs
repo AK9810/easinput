@@ -29,6 +29,30 @@ public class ConfigStoreTests
     }
 
     [Fact]
+    public void RoundTripsFirstRunShown()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "config.json");
+
+        ConfigStore.Save(path, new AppConfig { FirstRunShown = true });
+
+        Assert.True(ConfigStore.Load(path).FirstRunShown);
+    }
+
+    [Fact]
+    public void OldConfigWithoutFirstRunShownLoadsAsFalse()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "config.json");
+        File.WriteAllText(path, "{ \"enabled\": true, \"holdMs\": 1200 }");
+
+        var loaded = ConfigStore.Load(path);
+
+        Assert.False(loaded.FirstRunShown);
+        Assert.Equal(1200, loaded.HoldMs);
+    }
+
+    [Fact]
     public void MissingFileIsCreatedWithDefaults()
     {
         using var temp = new TempDirectory();

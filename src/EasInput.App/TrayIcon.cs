@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using EasInput.Core;
+using EasInput.Core.Interop;
 using Color = System.Drawing.Color;
 
 namespace EasInput.App;
@@ -16,11 +17,13 @@ public sealed class TrayIcon : IDisposable
     private readonly ToolStripMenuItem _enabled;
     private readonly ToolStripMenuItem _autostart;
     private IntPtr _iconHandle;
+    private IntPtr _foregroundBeforeMenu;
 
     public TrayIcon(
         AppConfig config,
         Action<bool> enabledChanged,
         Action<bool> autostartChanged,
+        Action<IntPtr> preview,
         Action openConfig,
         Action exit)
     {
@@ -39,16 +42,22 @@ public sealed class TrayIcon : IDisposable
         _autostart.Click += (_, _) => autostartChanged(_autostart.Checked);
 
         var menu = new ContextMenuStrip();
+
+        // The menu itself becomes foreground, so remember the window the user was in.
+        menu.Opening += (_, _) => _foregroundBeforeMenu = NativeMethods.GetForegroundWindow();
+
         menu.Items.Add(_enabled);
         menu.Items.Add(_autostart);
+        menu.Items.Add(new ToolStripMenuItem("预览效果", null, (_, _) => preview(_foregroundBeforeMenu)));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("打开配置文件", null, (_, _) => openConfig()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("退出", null, (_, _) => exit()));
 
+        var icon = CreateIcon(config, out _iconHandle);
         _notify = new NotifyIcon
         {
-            Icon = CreateIcon(config),
+            Icon = icon,
             Text = "easinput — 输入模式提示",
             Visible = true,
             ContextMenuStrip = menu,
@@ -56,19 +65,26 @@ public sealed class TrayIcon : IDisposable
         _notify.DoubleClick += (_, _) => openConfig();
     }
 
+    /// <summary>Shows a balloon tip from the tray icon.</summary>
+    public void Notify(string title, string text)
+    {
+        _notify.ShowBalloonTip(5000, title, text, ToolTipIcon.Info);
+    }
+
     public void Dispose()
     {
         _notify.Visible = false;
         _notify.Dispose();
 
-        if (_iconHandle != IntPtr.Zero)
-        {
-            DestroyIcon(_iconHandle);
-            _iconHandle = IntPtr.Zero;
-        }
+        DestroyIconHandle(_iconHandle);
+        _iconHandle = IntPtr.Zero;
     }
 
-    private Icon CreateIcon(AppConfig config)
+    /// <summary>
+    /// Draws the brand icon. The caller owns <paramref name="iconHandle"/> and must release it
+    /// with <see cref="DestroyIconHandle"/> once the <see cref="Icon"/> is no longer in use.
+    /// </summary>
+    public static Icon CreateIcon(AppConfig config, out IntPtr iconHandle)
     {
         using var bitmap = new Bitmap(32, 32);
         using (var graphics = Graphics.FromImage(bitmap))
@@ -91,8 +107,17 @@ public sealed class TrayIcon : IDisposable
             graphics.DrawString(config.ShortCodes.Chinese, font, text, new RectangleF(0, 0, 32, 32), format);
         }
 
-        _iconHandle = bitmap.GetHicon();
-        return Icon.FromHandle(_iconHandle);
+        iconHandle = bitmap.GetHicon();
+        return Icon.FromHandle(iconHandle);
+    }
+
+    /// <summary>Destroys a handle returned by <see cref="CreateIcon"/>.</summary>
+    public static void DestroyIconHandle(IntPtr iconHandle)
+    {
+        if (iconHandle != IntPtr.Zero)
+        {
+            DestroyIcon(iconHandle);
+        }
     }
 
     private static Color ParseColor(string text)
