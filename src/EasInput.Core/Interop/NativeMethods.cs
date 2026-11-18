@@ -65,7 +65,6 @@ internal static class NativeMethods
 
     public const int GWL_EXSTYLE = -20;
     public const long WS_EX_TOOLWINDOW = 0x00000080;
-    public const long WS_EX_TOPMOST = 0x00000008;
     public const long WS_EX_TRANSPARENT = 0x00000020;
     public const long WS_EX_LAYERED = 0x00080000;
     public const long WS_EX_NOACTIVATE = 0x08000000;
@@ -77,9 +76,6 @@ internal static class NativeMethods
     public const uint SWP_SHOWWINDOW = 0x0040;
 
     public static readonly IntPtr HWND_TOPMOST = new(-1);
-
-    public const int SW_HIDE = 0;
-    public const int SW_SHOWNOACTIVATE = 4;
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
@@ -122,9 +118,6 @@ internal static class NativeMethods
 
     [DllImport("user32.dll")]
     public static extern short GetKeyState(int nVirtKey);
-
-    [DllImport("user32.dll")]
-    public static extern short GetAsyncKeyState(int vKey);
 
     [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     public static extern IntPtr SendMessageTimeoutW(
@@ -177,8 +170,4 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool IsIconic(IntPtr hWnd);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 }

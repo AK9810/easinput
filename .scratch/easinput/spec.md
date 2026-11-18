@@ -102,8 +102,7 @@ CapsLock 用 `GetKeyState(VK_CAPITAL) & 1`，并以低级键盘钩子的边沿�
   "fontSize": 12,
   "shortCodes": { "chinese": "拼", "latinLower": "a", "latinUpper": "A" },
   "autostart": false,
-  "logLevel": "warn",
-  "debugOverlay": false
+  "logLevel": "warn"
 }
 ```
 

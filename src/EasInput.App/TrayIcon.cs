@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using EasInput.Core;
@@ -47,7 +48,7 @@ public sealed class TrayIcon : IDisposable
 
         _notify = new NotifyIcon
         {
-            Icon = CreateIcon(),
+            Icon = CreateIcon(config),
             Text = "easinput — 输入模式提示",
             Visible = true,
             ContextMenuStrip = menu,
@@ -67,7 +68,7 @@ public sealed class TrayIcon : IDisposable
         }
     }
 
-    private Icon CreateIcon()
+    private Icon CreateIcon(AppConfig config)
     {
         using var bitmap = new Bitmap(32, 32);
         using (var graphics = Graphics.FromImage(bitmap))
@@ -77,7 +78,7 @@ public sealed class TrayIcon : IDisposable
             graphics.Clear(Color.Transparent);
 
             using var path = RoundedRect(new RectangleF(1, 1, 30, 30), 9);
-            using var fill = new SolidBrush(Color.FromArgb(255, 0, 122, 255));
+            using var fill = new SolidBrush(ParseColor(config.PillColor));
             graphics.FillPath(fill, path);
 
             using var font = new Font("Microsoft YaHei UI", 15f, FontStyle.Bold, GraphicsUnit.Pixel);
@@ -87,11 +88,28 @@ public sealed class TrayIcon : IDisposable
                 Alignment = StringAlignment.Center,
                 LineAlignment = StringAlignment.Center,
             };
-            graphics.DrawString("拼", font, text, new RectangleF(0, 0, 32, 32), format);
+            graphics.DrawString(config.ShortCodes.Chinese, font, text, new RectangleF(0, 0, 32, 32), format);
         }
 
         _iconHandle = bitmap.GetHicon();
         return Icon.FromHandle(_iconHandle);
+    }
+
+    private static Color ParseColor(string text)
+    {
+        var fallback = Color.FromArgb(255, 0, 122, 255);
+        var value = (text ?? string.Empty).Trim();
+        if (value.Length != 7 || value[0] != '#')
+        {
+            return fallback;
+        }
+
+        if (!int.TryParse(value.AsSpan(1), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var rgb))
+        {
+            return fallback;
+        }
+
+        return Color.FromArgb(255, (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
     }
 
     private static GraphicsPath RoundedRect(RectangleF bounds, float radius)

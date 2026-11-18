@@ -14,12 +14,14 @@
         Focusable="False"
         IsHitTestVisible="False"
         UseLayoutRounding="True">
+    <!-- Margin must match BubbleWindow.ShadowPadding, which is the room reserved for the shadow. -->
     <Grid x:Name="Root" Margin="16">
+        <!-- Fallback only: ApplyStyle overrides the height, radius and padding from the config. -->
         <Border x:Name="Pill"
                 Height="23"
                 CornerRadius="11.5"
                 Background="#007AFF"
-                Padding="8.5,0">
+                Padding="8.97,0">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="9"
                                   ShadowDepth="2"

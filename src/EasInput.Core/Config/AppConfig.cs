@@ -28,9 +28,6 @@ public sealed class AppConfig
 
     public string LogLevel { get; set; } = "warn";
 
-    /// <summary>Draws the anchor tier and timings next to the bubble, for field debugging.</summary>
-    public bool DebugOverlay { get; set; }
-
     public AppConfig Normalize()
     {
         HoldMs = Math.Clamp(HoldMs, 100, 10_000);
@@ -68,7 +65,9 @@ public sealed class AppConfig
         if (text.Length is not (7 or 9) || text[0] != '#')
         {
             return false;
-        }        foreach (var c in text[1..])
+        }
+
+        foreach (var c in text[1..])
         {
             if (!Uri.IsHexDigit(c))
             {

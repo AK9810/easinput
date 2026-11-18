@@ -50,6 +50,9 @@ public partial class App : Application
             return;
         }
 
+        // The JSON setting is authoritative at startup; the tray then reflects the registry state.
+        Autostart.Set(_config.Autostart);
+
         DispatcherUnhandledException += (_, args) =>
         {
             Log.Error($"Unhandled exception: {args.Exception}");

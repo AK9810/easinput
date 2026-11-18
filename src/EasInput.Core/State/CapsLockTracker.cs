@@ -43,10 +43,4 @@ public sealed class CapsLockTracker
             _locked = !_locked;
         }
     }
-
-    public void Override(bool locked)
-    {
-        _locked = locked;
-        _seeded = true;
-    }
 }

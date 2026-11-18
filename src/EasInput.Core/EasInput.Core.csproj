@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="EasInput.App" />
     <InternalsVisibleTo Include="easinput" />
     <InternalsVisibleTo Include="EasInput.Core.Tests" />
   </ItemGroup>

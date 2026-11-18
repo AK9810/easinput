@@ -17,6 +17,7 @@ internal static class ProbeMode
         var output = new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true };
         Console.SetOut(output);
 
+        var config = ConfigStore.Load(ConfigStore.ResolvePath());
         var report = new StringBuilder();
         var foreground = NativeMethods.GetForegroundWindow();
         if (foreground == IntPtr.Zero)
@@ -56,9 +57,20 @@ internal static class ProbeMode
         {
             var work = WorkArea.Get(anchor.Rect.Left, anchor.Rect.Top);
             report.AppendLine($"work area  : {Describe(work)}");
+
+            var scale = NativeMethods.GetDpiForWindow(foreground) / 96.0;
+            if (scale <= 0)
+            {
+                scale = 1.0;
+            }
+
+            // No pill is laid out here, so the width is an estimate derived from the height.
+            var width = (int)Math.Round(config.PillHeight * 1.3 * scale);
+            var height = (int)Math.Round(config.PillHeight * scale);
+            var gap = (int)Math.Round(config.GapDip * scale);
             foreach (var mode in new[] { InputMode.Chinese, InputMode.LatinLower, InputMode.LatinUpper })
             {
-                var placed = BubblePlacement.Compute(anchor.Rect, width: 37, height: 29, gap: 4, workArea: work);
+                var placed = BubblePlacement.Compute(anchor.Rect, width, height, gap, workArea: work);
                 report.AppendLine($"bubble     : mode={mode} at {Describe(placed)}");
             }
         }
