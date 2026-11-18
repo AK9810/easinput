@@ -58,16 +58,13 @@ internal static class ProbeMode
             var work = WorkArea.Get(anchor.Rect.Left, anchor.Rect.Top);
             report.AppendLine($"work area  : {Describe(work)}");
 
-            var scale = NativeMethods.GetDpiForWindow(foreground) / 96.0;
-            if (scale <= 0)
-            {
-                scale = 1.0;
-            }
+            // Same monitor as the anchor, matching ShowAt rather than the foreground window's DPI.
+            var scale = DpiScale.ForPoint(anchor.Rect.Left, anchor.Rect.Top);
 
             // No pill is laid out here, so the width is an estimate derived from the height.
-            var width = (int)Math.Round(config.PillHeight * 1.3 * scale);
-            var height = (int)Math.Round(config.PillHeight * scale);
-            var gap = (int)Math.Round(config.GapDip * scale);
+            var width = DpiScale.Ceil(config.PillHeight * 1.3, scale);
+            var height = DpiScale.Ceil(config.PillHeight, scale);
+            var gap = DpiScale.Round(config.GapDip, scale);
             foreach (var mode in new[] { InputMode.Chinese, InputMode.LatinLower, InputMode.LatinUpper })
             {
                 var placed = BubblePlacement.Compute(anchor.Rect, width, height, gap, workArea: work);

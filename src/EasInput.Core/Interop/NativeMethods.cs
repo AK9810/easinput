@@ -62,6 +62,7 @@ internal static class NativeMethods
     public const uint SMTO_ABORTIFHUNG = 0x0002;
 
     public const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+    public const int MDT_EFFECTIVE_DPI = 0;
 
     public const int GWL_EXSTYLE = -20;
     public const long WS_EX_TOOLWINDOW = 0x00000080;
@@ -143,10 +144,10 @@ internal static class NativeMethods
     public static extern bool ImmGetOpenStatus(IntPtr hIMC);
 
     [DllImport("user32.dll")]
-    public static extern uint GetDpiForWindow(IntPtr hwnd);
-
-    [DllImport("user32.dll")]
     public static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
+
+    [DllImport("shcore.dll")]
+    public static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     [return: MarshalAs(UnmanagedType.Bool)]

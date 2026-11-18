@@ -8,6 +8,7 @@ using EasInput.Core.Interop;
 using EasInput.Core.Logging;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
+using DpiScale = EasInput.Core.DpiScale;
 using FontFamily = System.Windows.Media.FontFamily;
 using Size = System.Windows.Size;
 
@@ -67,18 +68,16 @@ public partial class BubbleWindow : Window
             return;
         }
 
-        var scale = NativeMethods.GetDpiForWindow(hwnd) / 96.0;
-        if (scale <= 0)
-        {
-            scale = 1.0;
-        }
+        // The anchor is physical screen pixels, so use the DPI of the monitor under it. The
+        // window's own DPI still belongs to the previous show's monitor until it is moved.
+        var scale = DpiScale.ForPoint(anchor.Left, anchor.Top);
 
         Pill.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        var pillWidth = (int)Math.Ceiling(Pill.DesiredSize.Width * scale);
-        var pillHeight = (int)Math.Ceiling(Pill.DesiredSize.Height * scale);
-        var gap = (int)Math.Round(config.GapDip * scale);
+        var pillWidth = DpiScale.Ceil(Pill.DesiredSize.Width, scale);
+        var pillHeight = DpiScale.Ceil(Pill.DesiredSize.Height, scale);
+        var gap = DpiScale.Round(config.GapDip, scale);
         var target = BubblePlacement.Compute(anchor, pillWidth, pillHeight, gap, workArea);
-        var padding = (int)Math.Round(ShadowPadding * scale);
+        var padding = DpiScale.Round(ShadowPadding, scale);
 
         if (!IsVisible)
         {
