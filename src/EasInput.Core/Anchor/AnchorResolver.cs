@@ -22,8 +22,12 @@ public sealed class Win32CaretLocator : ICaretLocator
             return false;
         }
 
+        // GetGUIThreadInfo(0) queries the calling thread, which never owns the foreground caret.
+        var threadId = NativeMethods.GetWindowThreadProcessId(foregroundWindow, out _);
         var info = GUITHREADINFO.Create();
-        if (!NativeMethods.GetGUIThreadInfo(0, ref info) || info.hwndCaret == IntPtr.Zero)
+        if (threadId == 0 ||
+            !NativeMethods.GetGUIThreadInfo(threadId, ref info) ||
+            info.hwndCaret == IntPtr.Zero)
         {
             return false;
         }
