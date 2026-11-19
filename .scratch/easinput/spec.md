@@ -45,6 +45,9 @@ CapsLock 用 `GetKeyState(VK_CAPITAL) & 1`，并以低级键盘钩子的边沿�
 
 ## 锚点降级
 
+> 本节自 2026-11-19 起作废：降级链已收紧为 Win32 插入符 → UIA 插入符 → 隐藏（无指针级）。
+> 以 [.scratch/caret-only-bubble/spec.md](../caret-only-bubble/spec.md) 为准。
+
 1. `GetGUIThreadInfo(foregroundTid).rcCaret`（`hwndCaret` 客户区坐标 → `ClientToScreen`）。
    校验：`hwndCaret` 非空、矩形非空、落在 `hwndCaret` 的窗口矩形内。
 2. UIA `TextPattern` 的 `GetSelection()` → `GetBoundingRectangles()`（屏幕物理像素）。
