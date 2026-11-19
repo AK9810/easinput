@@ -13,3 +13,9 @@ ZCode / 微信自身输入框只能真人验证。
 - [ ] 无插入符场景逐项确认静默：桌面、只读网页、ZCode 输入框、微信输入法自身输入框
 - [ ] 托盘菜单逐项点击正常（少了「预览效果」后的完整菜单）；首次运行 balloon 仍可见
 - [ ] 全部结果（含日期）记入 `.scratch/easinput/acceptance.md`
+
+## Comments
+
+- 2026-11-19 已解除阻塞：ticket 01/02 均已在 `feat/caret-only-bubble` 落地（合并 `bc30295`、`52ac745`；review 修复 `11d344d`、`e394f12`）。
+- 自动侧已覆盖：`--probe` 的 Win32 EDIT → `Caret`、Edge 地址栏 → `Uia`、桌面 → `Hidden`、ZCode → `Hidden`；`--preview` 已被忽略。验收矩阵中的隐藏预期已写入 `.scratch/easinput/acceptance.md`。
+- 本票全部条目仍需真人操作与记录，Status 保持 `ready-for-human`。

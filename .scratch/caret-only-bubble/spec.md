@@ -1,6 +1,6 @@
 # 气泡收紧为纯插入符语义
 
-Status: ready-for-agent
+Status: implemented (2026-11-19)；待 ticket 03 人工验收
 
 本 spec 修订产品 spec（`.scratch/easinput/spec.md`）的「锚点降级」一节；该节自本 spec 定案起作废。
 决策来源：2026-11-19 grilling 会话，Q1–Q4 全部定案。
