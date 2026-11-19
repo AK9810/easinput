@@ -7,13 +7,11 @@ public class AnchorResolverTests
     private static readonly IntPtr Window = new(42);
     private static readonly PixelRect CaretRect = PixelRect.FromLtrb(10, 10, 11, 26);
     private static readonly PixelRect UiaRect = PixelRect.FromLtrb(20, 20, 21, 46);
-    private static readonly PixelRect PointerRect = PixelRect.FromLtrb(30, 30, 31, 31);
 
     [Fact]
-    public void Win32CaretWinsOverUiaAndPointer()
+    public void Win32CaretWinsOverUia()
     {
-        var resolver = new AnchorResolver(
-            new FakeLocator(CaretRect), new FakeLocator(UiaRect), new FakeLocator(PointerRect));
+        var resolver = new AnchorResolver(new FakeLocator(CaretRect), new FakeLocator(UiaRect));
 
         var anchor = resolver.Resolve(Window);
 
@@ -24,8 +22,7 @@ public class AnchorResolverTests
     [Fact]
     public void FallsBackToUiaWhenWin32CaretIsMissing()
     {
-        var resolver = new AnchorResolver(
-            new FakeLocator(null), new FakeLocator(UiaRect), new FakeLocator(PointerRect));
+        var resolver = new AnchorResolver(new FakeLocator(null), new FakeLocator(UiaRect));
 
         var anchor = resolver.Resolve(Window);
 
@@ -34,22 +31,20 @@ public class AnchorResolverTests
     }
 
     [Fact]
-    public void FallsBackToPointerWhenBothCaretsAreMissing()
+    public void HidesWhenBothCaretLocatorsAreMissing()
     {
-        var resolver = new AnchorResolver(
-            new FakeLocator(null), new FakeLocator(null), new FakeLocator(PointerRect));
+        var resolver = new AnchorResolver(new FakeLocator(null), new FakeLocator(null));
 
         var anchor = resolver.Resolve(Window);
 
-        Assert.Equal(AnchorTier.Pointer, anchor.Tier);
-        Assert.Equal(PointerRect, anchor.Rect);
+        Assert.Equal(AnchorTier.Hidden, anchor.Tier);
+        Assert.Equal(default, anchor.Rect);
     }
 
     [Fact]
-    public void HidesWhenNothingIsFound()
+    public void HidesWhenWin32CaretIsMissingAndUiaIsNotConfigured()
     {
-        var resolver = new AnchorResolver(
-            new FakeLocator(null), new FakeLocator(null), new FakeLocator(null));
+        var resolver = new AnchorResolver(new FakeLocator(null));
 
         var anchor = resolver.Resolve(Window);
 
