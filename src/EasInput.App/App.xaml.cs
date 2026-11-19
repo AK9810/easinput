@@ -108,7 +108,7 @@ public partial class App : Application
         {
             _tray.Notify(
                 "easinput 已启动",
-                "提示会出现在光标下方。右键托盘图标可打开配置、开机自启或退出。");
+                "提示会出现在插入符下方。右键托盘图标可打开配置、开机自启或退出。");
             _config.FirstRunShown = true;
             ConfigStore.Save(_configPath, _config);
             Log.Info("First-run hint shown.");

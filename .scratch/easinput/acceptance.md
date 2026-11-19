@@ -22,6 +22,10 @@
 
 ## 生命周期 / 负向
 
+> 历史记录说明：本节记录于 2026-11-18；涉及「指针」的条目反映当时的四级降级链
+> （含指针兜底），仅作历史比对，不代表当前语义。当前语义以
+> [caret-only-bubble/spec.md](../caret-only-bubble/spec.md) 为准。
+
 - 无 caret + 指针在焦点窗外（资源管理器）：Shift 后 mode 由 LatinLower→Chinese，`anchor=Hidden`，日志无 `Show`。通过。
 - 气泡可见时切焦点（Edge→记事本）：`Show` 22:34:03.161 → `Hide` 22:34:03.362；聚焦调用后 11ms 内 Hide。最小化 Edge 同样触发 Hide。通过。
 - 10 次快速 Shift：10 条 `Show` 交替「拼」/「a」，进程正常，无崩溃。闪烁视觉需人工。

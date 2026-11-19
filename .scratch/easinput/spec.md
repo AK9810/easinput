@@ -48,14 +48,9 @@ CapsLock 用 `GetKeyState(VK_CAPITAL) & 1`，并以低级键盘钩子的边沿�
 > 本节自 2026-11-19 起作废：降级链已收紧为 Win32 插入符 → UIA 插入符 → 隐藏（无指针级）。
 > 以 [.scratch/caret-only-bubble/spec.md](../caret-only-bubble/spec.md) 为准。
 
-1. `GetGUIThreadInfo(foregroundTid).rcCaret`（`hwndCaret` 客户区坐标 → `ClientToScreen`）。
-   校验：`hwndCaret` 非空、矩形非空、落在 `hwndCaret` 的窗口矩形内。
-2. UIA `TextPattern` 的 `GetSelection()` → `GetBoundingRectangles()`（屏幕物理像素）。
-   退化 range 可能返回空数组：把 range 扩一个字符后取 `rect[0]`。工作线程 + 超时。
-3. 指针：`GetCursorPos`，仅当指针位于焦点窗口矩形内。
-4. 隐藏。
-
-实现 1、2、3、4。
+历史记录（非执行指令）：2026-11-19 之前的降级链为 Win32 插入符 → UIA 插入符 →
+指针（仅当指针位于焦点窗口内）→ 隐藏；逐级校验细节见 git 历史。
+当前语义由 [.scratch/caret-only-bubble/spec.md](../caret-only-bubble/spec.md) 定义。
 
 ## 触发与生命周期
 

@@ -15,5 +15,5 @@ Qt/Java、远程桌面等探测不到插入符的场景彻底静默。触发机�
 - [ ] `--probe` 实测：Win32 EDIT → Caret；VS Code / Edge 地址栏 → Uia；桌面 → hidden
 - [ ] 实机：桌面按 CapsLock、点击非文本区域切换前台，均不再弹泡
 - [ ] CONTEXT.md：删「指针」词条，「锚点降级」改写为三级
-- [ ] ADR-0003 修订：降级链三级，记录 macOS 在同场景同样弹于光标处且被用户长期抱怨的理由
+- [ ] ADR-0003 修订：降级链三级，记录 macOS 在同场景同样弹于鼠标指针处且被用户长期抱怨的理由
 - [ ] acceptance.md：ZCode / 微信自身输入框 / 只读网页各行预期更新为 hidden
