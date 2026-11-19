@@ -41,16 +41,6 @@ public class AnchorResolverTests
         Assert.Equal(default, anchor.Rect);
     }
 
-    [Fact]
-    public void HidesWhenWin32CaretIsMissingAndUiaIsNotConfigured()
-    {
-        var resolver = new AnchorResolver(new FakeLocator(null));
-
-        var anchor = resolver.Resolve(Window);
-
-        Assert.Equal(AnchorTier.Hidden, anchor.Tier);
-    }
-
     private sealed class FakeLocator : ICaretLocator
     {
         private readonly PixelRect? _rect;

@@ -71,9 +71,9 @@ public sealed class Win32CaretLocator : ICaretLocator
 public sealed class AnchorResolver
 {
     private readonly ICaretLocator _caret;
-    private readonly ICaretLocator? _uia;
+    private readonly ICaretLocator _uia;
 
-    public AnchorResolver(ICaretLocator caret, ICaretLocator? uia = null)
+    public AnchorResolver(ICaretLocator caret, ICaretLocator uia)
     {
         _caret = caret;
         _uia = uia;
@@ -86,7 +86,7 @@ public sealed class AnchorResolver
             return new Anchor(AnchorTier.Caret, caret);
         }
 
-        if (_uia is not null && _uia.TryLocate(foregroundWindow, out var uiaCaret))
+        if (_uia.TryLocate(foregroundWindow, out var uiaCaret))
         {
             return new Anchor(AnchorTier.Uia, uiaCaret);
         }
