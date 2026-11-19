@@ -13,7 +13,7 @@ Windows 上的输入模式提示器：在文本插入符下方显示一个瞬时
 | 英文小写 | 蓝底「a」 |
 | 英文大写 | 蓝底「A」 |
 
-视觉与位置按 macOS Sonoma 的光标配件（cursor accessory）1:1 复刻：23pt 高药丸、圆角 = 高度/2、
+视觉与位置按 macOS Sonoma 的插入符配件（cursor accessory）1:1 复刻：23pt 高药丸、圆角 = 高度/2、
 系统蓝 `#007AFF`、插入符正下方居中、约 3pt 间距、柔和阴影、淡入淡出。差异只有两处，且是刻意的：
 macOS 的徽标只表达输入源身份（同一输入法内切中英不变），大小写靠独立的常驻 ⇪ 徽标；
 本项目显示的是**输入模式**，并把 CapsLock 折进「A」。详见 [ADR-0004](docs/adr/0004-visual-language-and-semantics.md)。
@@ -25,7 +25,7 @@ macOS 的徽标只表达输入源身份（同一输入法内切中英不变）�
 - 空闲总 CPU 0.039%、私有内存 71.9MB（Debug / 12 逻辑核实测）。
 - 插入符下方显示，不挡正文；锚点三级降级：Win32 插入符 → UIA TextPattern → 隐藏。
 - 三种状态「拼 / a / A」，CapsLock 折进「A」——macOS 原生没有这个语义。
-- 视觉按 macOS Sonoma 光标配件 1:1 复刻：23pt 高、圆角 = 高度/2、`#007AFF`、3pt 间距、柔和阴影。
+- 视觉按 macOS Sonoma 插入符配件 1:1 复刻：23pt 高、圆角 = 高度/2、`#007AFF`、3pt 间距、柔和阴影。
 
 ## 使用方法
 
@@ -141,7 +141,8 @@ exe 未签名，首次下载运行会被 SmartScreen 拦一下。
 - [CONTEXT.md](CONTEXT.md)：术语表
 - [docs/adr](docs/adr)：技术决策
 - [docs/reference/macos-input-hud.md](docs/reference/macos-input-hud.md)：macOS 参考规格（实测值）
-- [.scratch/easinput/spec.md](.scratch/easinput/spec.md)：完整规格与验收标准
+- [.scratch/easinput/spec.md](.scratch/easinput/spec.md)：完整规格（「锚点降级」一节已作废，现行语义见下）
+- [.scratch/caret-only-bubble/spec.md](.scratch/caret-only-bubble/spec.md)：现行的纯插入符锚点规格
 
 ## 许可证
 
