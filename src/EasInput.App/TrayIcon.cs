@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using EasInput.Core;
-using EasInput.Core.Interop;
 using Color = System.Drawing.Color;
 
 namespace EasInput.App;
@@ -17,13 +16,11 @@ public sealed class TrayIcon : IDisposable
     private readonly ToolStripMenuItem _enabled;
     private readonly ToolStripMenuItem _autostart;
     private IntPtr _iconHandle;
-    private IntPtr _foregroundBeforeMenu;
 
     public TrayIcon(
         AppConfig config,
         Action<bool> enabledChanged,
         Action<bool> autostartChanged,
-        Action<IntPtr> preview,
         Action openConfig,
         Action exit)
     {
@@ -43,12 +40,8 @@ public sealed class TrayIcon : IDisposable
 
         var menu = new ContextMenuStrip();
 
-        // The menu itself becomes foreground, so remember the window the user was in.
-        menu.Opening += (_, _) => _foregroundBeforeMenu = NativeMethods.GetForegroundWindow();
-
         menu.Items.Add(_enabled);
         menu.Items.Add(_autostart);
-        menu.Items.Add(new ToolStripMenuItem("预览效果", null, (_, _) => preview(_foregroundBeforeMenu)));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("打开配置文件", null, (_, _) => openConfig()));
         menu.Items.Add(new ToolStripSeparator());

@@ -1,7 +1,6 @@
 using System.Windows.Threading;
 using EasInput.Core;
 using EasInput.Core.Interop;
-using EasInput.Core.Logging;
 
 namespace EasInput.App;
 
@@ -98,15 +97,6 @@ public sealed class BubbleController : IDisposable
         {
             Post(HideBubble);
         }
-    }
-
-    /// <summary>
-    /// Shows the bubble once for the given window (the one that was foreground when the tray
-    /// menu opened), reusing the same anchor fallback and hold/fade timing as a real key.
-    /// </summary>
-    public void Preview(IntPtr foreground)
-    {
-        Post(() => ShowPreview(foreground, 0));
     }
 
     public void Dispose()
@@ -215,76 +205,6 @@ public sealed class BubbleController : IDisposable
         _shownFor = foreground;
         _bubble.ShowAt(anchor.Rect, mode, _config.ShortCodes.For(mode), _config, workArea, _keyTimestamp);
         _keyTimestamp = 0;
-    }
-
-    private void ShowPreview(IntPtr preferred, int attempt)
-    {
-        var foreground = preferred;
-
-        // While the tray menu is closing the foreground can still be ours (or briefly zero).
-        // The window the user was working in comes back a few hundred milliseconds later.
-        if (IsOwnWindow(foreground))
-        {
-            foreground = NativeMethods.GetForegroundWindow();
-        }
-
-        if (IsOwnWindow(foreground) ||
-            NativeMethods.IsIconic(foreground) ||
-            !TryReadMode(foreground, out var mode))
-        {
-            RetryPreview(attempt);
-            return;
-        }
-
-        var anchor = _anchors.Resolve(foreground);
-        if (anchor.Tier == AnchorTier.Hidden)
-        {
-            RetryPreview(attempt);
-            return;
-        }
-
-        // ShowAt repositions and restarts the hold timer when a bubble is already up.
-        _lastObserved = mode;
-        _shownFor = foreground;
-        _bubble.ShowAt(
-            anchor.Rect,
-            mode,
-            _config.ShortCodes.For(mode),
-            _config,
-            WorkArea.Get(anchor.Rect.Left, anchor.Rect.Top));
-    }
-
-    private void RetryPreview(int attempt)
-    {
-        const int MaxAttempts = 8;
-
-        if (attempt >= MaxAttempts)
-        {
-            Log.Warn("Preview: no usable foreground window.");
-            return;
-        }
-
-        var timer = new DispatcherTimer(DispatcherPriority.Normal, _dispatcher)
-        {
-            Interval = TimeSpan.FromMilliseconds(80),
-        };
-        timer.Tick += (_, _) =>
-        {
-            timer.Stop();
-            ShowPreview(IntPtr.Zero, attempt + 1);
-        };
-        timer.Start();
-    }
-
-    private static bool IsOwnWindow(IntPtr hwnd)
-    {
-        if (hwnd == IntPtr.Zero)
-        {
-            return true;
-        }
-
-        NativeMethods.GetWindowThreadProcessId(hwnd, out var pid);
-        return pid == (uint)Environment.ProcessId;
     }
 
     private void HideIfFocusLost(IntPtr foreground)
