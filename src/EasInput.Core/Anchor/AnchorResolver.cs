@@ -53,8 +53,7 @@ public sealed class Win32CaretLocator : ICaretLocator
         }
 
         var windowRect = PixelRect.FromRect(window);
-        if (rect.Right <= windowRect.Left || rect.Left >= windowRect.Right ||
-            rect.Bottom <= windowRect.Top || rect.Top >= windowRect.Bottom)
+        if (!rect.Intersects(windowRect))
         {
             return false;
         }

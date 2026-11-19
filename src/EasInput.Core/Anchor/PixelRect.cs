@@ -11,6 +11,9 @@ public readonly record struct PixelRect(int Left, int Top, int Right, int Bottom
 
     public static PixelRect FromLtrb(int left, int top, int right, int bottom) => new(left, top, right, bottom);
 
+    /// <summary>True when the rectangles overlap by at least one pixel; touching edges do not intersect.</summary>
+    public bool Intersects(PixelRect other) => Left < other.Right && Right > other.Left && Top < other.Bottom && Bottom > other.Top;
+
     internal static PixelRect FromRect(in RECT rect) => new(rect.Left, rect.Top, rect.Right, rect.Bottom);
 }
 

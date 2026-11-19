@@ -177,8 +177,7 @@ public sealed class UiaCaretLocator : ICaretLocator
         }
 
         var rect = PixelRect.FromRect(window);
-        return caret.Right > rect.Left && caret.Left < rect.Right &&
-               caret.Bottom > rect.Top && caret.Top < rect.Bottom;
+        return caret.Intersects(rect);
     }
 
     private sealed class Request
