@@ -64,17 +64,19 @@ public sealed class Win32CaretLocator : ICaretLocator
 }
 
 /// <summary>
-/// Tiers in order: Win32 caret → UIA text caret → hidden. The bubble only appears at a real
-/// caret; without one it stays hidden. See ADR-0003.
+/// Tiers in order: Win32 caret → MSAA caret → UIA text caret → hidden. The bubble only appears
+/// at a real caret; without one it stays hidden. See ADR-0003.
 /// </summary>
 public sealed class AnchorResolver
 {
     private readonly ICaretLocator _caret;
+    private readonly ICaretLocator _msaa;
     private readonly ICaretLocator _uia;
 
-    public AnchorResolver(ICaretLocator caret, ICaretLocator uia)
+    public AnchorResolver(ICaretLocator caret, ICaretLocator msaa, ICaretLocator uia)
     {
         _caret = caret;
+        _msaa = msaa;
         _uia = uia;
     }
 
@@ -83,6 +85,11 @@ public sealed class AnchorResolver
         if (_caret.TryLocate(foregroundWindow, out var caret))
         {
             return new Anchor(AnchorTier.Caret, caret);
+        }
+
+        if (_msaa.TryLocate(foregroundWindow, out var msaaCaret))
+        {
+            return new Anchor(AnchorTier.Msaa, msaaCaret);
         }
 
         if (_uia.TryLocate(foregroundWindow, out var uiaCaret))

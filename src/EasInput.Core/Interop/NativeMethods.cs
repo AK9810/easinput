@@ -76,6 +76,10 @@ internal static class NativeMethods
     public const long WS_EX_LAYERED = 0x00080000;
     public const long WS_EX_NOACTIVATE = 0x08000000;
 
+    public const uint OBJID_CARET = 0xFFFFFFF8;
+
+    public static readonly Guid IID_IAccessible = new("618736E0-3C3D-11CF-810C-00AA00389B71");
+
     public const uint SWP_NOSIZE = 0x0001;
     public const uint SWP_NOMOVE = 0x0002;
     public const uint SWP_NOZORDER = 0x0004;
@@ -144,6 +148,11 @@ internal static class NativeMethods
     [DllImport("imm32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool ImmGetOpenStatus(IntPtr hIMC);
+
+    [DllImport("oleacc.dll")]
+    public static extern int AccessibleObjectFromWindow(
+        IntPtr hwnd, uint dwObjectId, ref Guid riid,
+        [MarshalAs(UnmanagedType.Interface)] out object ppvObject);
 
     [DllImport("user32.dll")]
     public static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);

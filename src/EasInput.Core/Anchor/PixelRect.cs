@@ -20,6 +20,7 @@ public readonly record struct PixelRect(int Left, int Top, int Right, int Bottom
 public enum AnchorTier
 {
     Caret,
+    Msaa,
     Uia,
     Hidden,
 }

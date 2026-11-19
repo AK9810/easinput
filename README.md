@@ -23,7 +23,8 @@ macOS 的徽标只表达输入源身份（同一输入法内切中英不变）�
 - 单文件 66MB，零安装、零运行时依赖、零第三方库。
 - 零网络请求（源码里没有任何 HTTP/Socket 调用），纯本地，不联网。
 - 空闲总 CPU 0.039%、私有内存 71.9MB（Debug / 12 逻辑核实测）。
-- 插入符下方显示，不挡正文；锚点三级降级：Win32 插入符 → UIA TextPattern → 隐藏。
+- 插入符下方显示，不挡正文；锚点降级：Win32 插入符 → MSAA `OBJID_CARET` → UIA `TextPattern` → 隐藏。
+- 切到另一个有插入符的窗口会提示当前模式，即使模式没变；同一窗口、同一模式不重复弹。
 - 三种状态「拼 / a / A」，CapsLock 折进「A」——macOS 原生没有这个语义。
 - 视觉按 macOS Sonoma 插入符配件 1:1 复刻：23pt 高、圆角 = 高度/2、`#007AFF`、3pt 间距、柔和阴影。
 
@@ -31,7 +32,7 @@ macOS 的徽标只表达输入源身份（同一输入法内切中英不变）�
 
 ### 下载与运行
 
-从 [Releases](https://github.com/AK9810/easinput/releases/latest) 下载 `easinput-v0.1.1-win-x64.exe`
+从 [Releases](https://github.com/AK9810/easinput/releases/latest) 下载 `easinput-v0.2.0-win-x64.exe`
 （单文件约 66MB，自包含，Windows 10/11 x64，只在 Windows 11 上实测过，无需安装 .NET），双击运行。
 
 程序没有主窗口，图标在任务栏右下角的托盘溢出区（`^`）里。首次运行会被 SmartScreen 拦：
@@ -80,6 +81,7 @@ macOS 的徽标只表达输入源身份（同一输入法内切中英不变）�
 ## 排查
 
 - 某个应用里不显示：先在终端里跑 `easinput.exe --probe`，看 anchor 的 tier。
+- 微信 4.x：已知不兼容，三条插入符路径都为空，见「已知限制」。
 - 提权窗口 / UAC 安全桌面 / 独占全屏 / 锁屏：本来就不支持。
 - 只读网页、PDF：没有插入符，气泡不显示。
 - 找不到托盘图标：Win11 默认收进 `^` 溢出区。
@@ -93,8 +95,14 @@ macOS 的徽标只表达输入源身份（同一输入法内切中英不变）�
 ## 已知限制
 
 - 提权窗口（UIPI）、UAC 安全桌面、独占全屏游戏、锁屏：不支持。
-- Chromium/WinUI3/Office/Terminal 的插入符走 UIA `TextPattern` 兜底（Chromium 系已验证；
-  首次查询某个应用有约 300ms 的 UIA 冷启动）。只读网页/PDF 会被判定为无插入符，气泡隐藏。
+- Chromium/Electron（VS Code、ZCode、Edge 地址栏）的插入符走 MSAA `OBJID_CARET`：UIA
+  `TextPattern` 对折叠 selection 会返回整行盒（VS Code）或完全不给矩形（ZCode 空输入框），
+  而 MSAA 在两种情况下都给出真实插入符。WinUI3/Office/Terminal 等仍走 UIA `TextPattern`
+  兜底；MSAA 与 UIA 都是跨进程调用，各自带超时。只读网页/PDF 会被判定为无插入符，气泡隐藏。
+- 微信 4.x（`Weixin.exe`）不兼容：主窗口是 Qt 自绘 + TSF，Win32 插入符、MSAA `OBJID_CARET`、
+  UIA `TextPattern` 三条路径都拿不到插入符，气泡保持隐藏。这是已知边界，不是故障；
+  不采用固定偏移或指针兜底，也不注入进程。
+- 同一个窗口内把焦点移到另一个输入框、但输入模式没变时，不会弹；只有切换前台窗口才会。
 - 全角/半角、中英标点、输入法显示名：不显示。
 - 混合 DPI 多屏下的定位只做了基本处理，尚未逐屏验证。
 - 按键→显示实测 avg 57.7ms（Debug / 12 逻辑核），高于 50ms 预算；空闲总 CPU 0.039%、私有内存 71.9MB。

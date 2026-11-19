@@ -49,7 +49,8 @@ internal static class ProbeMode
             report.AppendLine("ime        : unreadable (no IME window and no HIMC)");
         }
 
-        var anchors = new AnchorResolver(new Win32CaretLocator(), new UiaCaretLocator());
+        var anchors = new AnchorResolver(
+            new Win32CaretLocator(), new MsaaCaretLocator(), new UiaCaretLocator());
         var anchor = anchors.Resolve(foreground);
         report.AppendLine($"anchor     : tier={anchor.Tier} rect={Describe(anchor.Rect)}");
 

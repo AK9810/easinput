@@ -12,5 +12,8 @@ publish-single/
 # Local reference screenshots and captures (third-party images, large)
 .scratch/ref/
 
+# Ad-hoc diagnostic scripts (probe helpers)
+.scratch/tools/
+
 # --calibrate output
 calibrate-*.png

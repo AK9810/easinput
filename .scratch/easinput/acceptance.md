@@ -52,3 +52,35 @@
 6. 托盘菜单逐项点击。
 7. 混合 DPI 多屏（单屏无法验证）。
 8. Word 视觉比对（功能/位置已自动通过）。
+
+## 2026-11-19 修订：MSAA 插入符（ticket 04）
+
+自动证据（`--probe`，Debug 构建，`feat/caret-only-bubble`）：
+
+| 应用 | 锚点层级 | 实测矩形 | 结果 |
+|---|---|---|---|
+| VS Code（编辑器内） | Msaa | 1140,493-1141,520 1×27 | 通过；UIA 仍报整行盒 1088×26，已被拒绝 |
+| ZCode 空输入框 | Msaa | 891,1039-892,1065 1×26 | 通过；修复「首字符输入前不显示」 |
+| Edge 地址栏 | Msaa | 1×25 | 通过 |
+| Edge 只读网页 | Hidden | — | 通过 |
+| Win32 EDIT harness | Caret | 1×16 | 通过（Win32 优先级未回退） |
+
+视觉：VS Code 与 ZCode 空输入框的气泡均在插入符正下方居中
+（`.scratch/ref/fix-vscode.png`、`.scratch/ref/fix-zcode-empty3.png`）。
+本表是当天的自动复测；真人与托盘项仍按 ticket 03 执行。
+
+## 2026-11-19 修订：焦点切换触发与锚点重试（ticket 05）
+
+自动验证（Debug 构建，`feat/caret-only-bubble`，125% 缩放）：
+
+| 场景 | 日志证据 | 结果 |
+|---|---|---|
+| 启动后切到 ZCode（模式未变 LatinLower） | `Trigger: FocusChange` → `Anchor: tier=Msaa` → `Show: code=a` | 通过 |
+| VS Code（Chinese）→ Windows Terminal（Chinese），同模式切窗 | `Trigger: FocusChange` → `Show: code=拼` | 通过 |
+| 切到桌面 `Progman` | `Trigger: FocusChange hwnd=0x101CA` → 3× `Anchor: hidden` | 通过（静默） |
+| 切到微信 4.x（Weixin.exe） | 3× `Anchor: hidden` | 通过（按决定不兼容） |
+| 同窗口 CapsLock 切换 | `Trigger: ModeChange` → `Latency: 29.9–41.8ms` | 通过（无回退） |
+
+语义变化：旧口径「状态未变的焦点切换不显示」作废；现在切到另一个能解析插入符的窗口会弹，
+同一窗口、同一模式的 300ms 轮询仍不重复弹。锚点隐藏时按 150ms 间隔重试 3 次，
+仍失败才静默消费。微信 4.x 实测 Win32/MSAA/UIA 均拿不到插入符，保持静默。

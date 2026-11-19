@@ -110,14 +110,15 @@ public sealed class UiaCaretLocator : ICaretLocator
 
         // A selection is not a caret: collapse it to its active end before reading rectangles.
         var caretRange = CollapseToCaret(range);
-        var rect = FirstRect(caretRange);
+        var rect = FirstCaretBar(caretRange);
         if (rect is null)
         {
-            // A degenerate caret range at the end of a line can return no rectangles. Expand to
-            // the enclosing character and use its box (ADR-0003).
+            // A degenerate caret range can return no rectangles, and some providers answer it
+            // with the whole line box (the "middle of the line" bug). Expand to the enclosing
+            // character and use its box; the geometry check rejects a line-wide box (ADR-0003).
             var expanded = caretRange.Clone();
             expanded.ExpandToEnclosingUnit(TextUnit.Character);
-            rect = FirstRect(expanded);
+            rect = FirstCharacterBox(expanded);
         }
 
         if (rect is not { } caret || !IsInside(foregroundWindow, caret))
@@ -143,30 +144,39 @@ public sealed class UiaCaretLocator : ICaretLocator
         }
     }
 
-    private static PixelRect? FirstRect(TextPatternRange range)
+    private static PixelRect? FirstCaretBar(TextPatternRange range)
     {
-        var bounds = range.GetBoundingRectangles();
-        if (bounds.Length == 0)
+        foreach (var bounds in range.GetBoundingRectangles())
         {
-            return null;
+            if (CaretGeometry.TryCaretBar(ToPixelRect(bounds), out var caret))
+            {
+                return caret;
+            }
         }
 
-        var first = bounds[0];
-        var left = (int)Math.Round(first.Left);
-        var top = (int)Math.Round(first.Top);
-        var width = (int)Math.Round(first.Width);
-        var height = (int)Math.Round(first.Height);
-        if (height <= 0)
+        return null;
+    }
+
+    private static PixelRect? FirstCharacterBox(TextPatternRange range)
+    {
+        foreach (var bounds in range.GetBoundingRectangles())
         {
-            return null;
+            if (CaretGeometry.TryCharacterBox(ToPixelRect(bounds), out var box))
+            {
+                return box;
+            }
         }
 
-        if (width <= 0)
-        {
-            width = 1;
-        }
+        return null;
+    }
 
-        return PixelRect.FromLtrb(left, top, left + width, top + height);
+    private static PixelRect ToPixelRect(System.Windows.Rect bounds)
+    {
+        var left = (int)Math.Round(bounds.Left);
+        var top = (int)Math.Round(bounds.Top);
+        var right = (int)Math.Round(bounds.Right);
+        var bottom = (int)Math.Round(bounds.Bottom);
+        return PixelRect.FromLtrb(left, top, right, bottom);
     }
 
     private static bool IsInside(IntPtr foregroundWindow, PixelRect caret)

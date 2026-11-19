@@ -72,7 +72,8 @@ public sealed class KeyboardHook : IDisposable
             return !isDown;
         }
 
-        // A plain keystroke only matters while the bubble is visible: it dismisses it.
-        return isDown && _controller.IsBubbleVisible;
+        // A plain keystroke matters while the bubble is visible or a show is still being
+        // resolved: in both cases it must dismiss or cancel the pending bubble.
+        return isDown && (_controller.IsBubbleVisible || _controller.IsShowPending);
     }
 }
