@@ -64,52 +64,19 @@ public sealed class Win32CaretLocator : ICaretLocator
     }
 }
 
-public sealed class PointerLocator : ICaretLocator
-{
-    /// <summary>
-    /// Tier 3: the pointer, but only while it is inside the focus window. Anchoring to a pointer
-    /// that wandered off to another window would put the bubble in a place unrelated to typing.
-    /// </summary>
-    public bool TryLocate(IntPtr foregroundWindow, out PixelRect pointer)
-    {
-        pointer = default;
-        if (foregroundWindow == IntPtr.Zero)
-        {
-            return false;
-        }
-
-        if (!NativeMethods.GetCursorPos(out var position) ||
-            !NativeMethods.GetWindowRect(foregroundWindow, out var window))
-        {
-            return false;
-        }
-
-        var rect = PixelRect.FromRect(window);
-        if (!rect.Contains(position.X, position.Y))
-        {
-            return false;
-        }
-
-        pointer = PixelRect.FromLtrb(position.X, position.Y, position.X + 1, position.Y + 1);
-        return true;
-    }
-}
-
 /// <summary>
-/// Tiers in order: Win32 caret → UIA text caret → pointer inside the focus window → hidden.
-/// See ADR-0003.
+/// Tiers in order: Win32 caret → UIA text caret → hidden. The bubble only appears at a real
+/// caret; without one it stays hidden. See ADR-0003.
 /// </summary>
 public sealed class AnchorResolver
 {
     private readonly ICaretLocator _caret;
     private readonly ICaretLocator? _uia;
-    private readonly ICaretLocator _pointer;
 
-    public AnchorResolver(ICaretLocator caret, ICaretLocator? uia = null, ICaretLocator? pointer = null)
+    public AnchorResolver(ICaretLocator caret, ICaretLocator? uia = null)
     {
         _caret = caret;
         _uia = uia;
-        _pointer = pointer ?? new PointerLocator();
     }
 
     public Anchor Resolve(IntPtr foregroundWindow)
@@ -122,11 +89,6 @@ public sealed class AnchorResolver
         if (_uia is not null && _uia.TryLocate(foregroundWindow, out var uiaCaret))
         {
             return new Anchor(AnchorTier.Uia, uiaCaret);
-        }
-
-        if (_pointer.TryLocate(foregroundWindow, out var pointer))
-        {
-            return new Anchor(AnchorTier.Pointer, pointer);
         }
 
         return Anchor.Hidden;
