@@ -18,6 +18,15 @@ public sealed class TriggerPolicy
     private IntPtr _window;
     private bool _seeded;
 
+    /// <summary>The mode last reported or seeded; the value the next observation is compared to.</summary>
+    public InputMode CurrentMode => _mode;
+
+    /// <summary>The window last reported or seeded.</summary>
+    public IntPtr CurrentWindow => _window;
+
+    /// <summary>False until the first observation; a failed startup read leaves this false.</summary>
+    public bool IsSeeded => _seeded;
+
     /// <summary>Remembers the current state without treating it as a change (app startup).</summary>
     public void Seed(InputMode mode, IntPtr window)
     {

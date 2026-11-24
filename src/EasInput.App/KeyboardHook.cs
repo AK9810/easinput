@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Threading;
 using EasInput.Core;
 using EasInput.Core.Interop;
+using EasInput.Core.Logging;
 
 namespace EasInput.App;
 
@@ -26,14 +27,38 @@ public sealed class KeyboardHook : IDisposable
 
     public bool Install() => (_hook = WindowInterop.KeyboardHook.Install(_callback)) != IntPtr.Zero;
 
-    public void Dispose()
+    /// <summary>
+    /// Removes the hook and reports whether Windows still knew about it. A false return means the
+    /// hook was already gone — the OS silently drops a low-level hook whose callback times out —
+    /// which is one of the drifts a restart cures. Idempotent.
+    /// </summary>
+    public bool Unhook(bool reportAtWarningLevel = false)
     {
-        if (_hook != IntPtr.Zero)
+        if (_hook == IntPtr.Zero)
         {
-            WindowInterop.UnhookWindowsHookEx(_hook);
-            _hook = IntPtr.Zero;
+            return true;
         }
+
+        var removed = WindowInterop.UnhookWindowsHookEx(_hook);
+        _hook = IntPtr.Zero;
+
+        if (!removed)
+        {
+            Log.Warn("Keyboard hook: Windows no longer knew it (silently removed earlier).");
+        }
+        else if (reportAtWarningLevel)
+        {
+            Log.Warn("Keyboard hook: removed cleanly.");
+        }
+        else
+        {
+            Log.Debug("Keyboard hook: removed cleanly.");
+        }
+
+        return removed;
     }
+
+    public void Dispose() => Unhook();
 
     private IntPtr OnKey(int nCode, IntPtr wParam, IntPtr lParam)
     {

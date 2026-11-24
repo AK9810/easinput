@@ -9,7 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>EasInput.App</RootNamespace>
     <AssemblyName>easinput</AssemblyName>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <SatelliteResourceLanguages>en;zh-Hans</SatelliteResourceLanguages>
     <NoWarn>$(NoWarn);WFAC010</NoWarn>

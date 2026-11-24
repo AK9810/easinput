@@ -11,8 +11,16 @@ namespace EasInput.App;
 
 public partial class App : Application
 {
+    private const string MutexName = @"Local\easinput.singleton";
+
+    /// <summary>Marks the instance a restart launched, so it waits for the handoff instead of quitting.</summary>
+    private const string RestartArgument = "--restarted";
+
+    private const int RestartHandoffMs = 3_000;
+
     private Mutex? _mutex;
     private bool _ownsMutex;
+    private bool _restarting;
     private BubbleWindow? _bubble;
     private BubbleController? _controller;
     private KeyboardHook? _keyboard;
@@ -49,9 +57,9 @@ public partial class App : Application
             return;
         }
 
-        _mutex = new Mutex(initiallyOwned: true, @"Local\easinput.singleton", out var createdNew);
-        _ownsMutex = createdNew;
-        if (!createdNew)
+        var restarted = e.Args.Any(a => a.Equals(RestartArgument, StringComparison.OrdinalIgnoreCase));
+        _mutex = AcquireMutex(restarted, out _ownsMutex);
+        if (_mutex is null)
         {
             Log.Info("Another instance is already running; showing a hint and exiting.");
             NotifyAlreadyRunning();
@@ -100,11 +108,17 @@ public partial class App : Application
                 ConfigStore.Save(_configPath, _config);
             },
             OpenConfig,
+            Restart,
             Shutdown);
 
         Log.Info($"Started. Config: {_configPath}");
 
-        if (!_config.FirstRunShown)
+        if (restarted)
+        {
+            _tray.Notify("已重启", "输入模式与 CapsLock 状态已重新读取。");
+            Log.Info("Restarted by the tray menu.");
+        }
+        else if (!_config.FirstRunShown)
         {
             _tray.Notify(
                 "easinput 已启动",
@@ -134,6 +148,170 @@ public partial class App : Application
 
         Log.Info("Exited.");
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// The tray's 重启: ends this process and starts a fresh one. Re-seeding the state in place
+    /// would be a hand-maintained list of everything the controller owns; a missed entry makes the
+    /// button lie to the user, while a new process is complete by construction. See ADR-0006.
+    /// </summary>
+    private void Restart()
+    {
+        if (_restarting)
+        {
+            return;
+        }
+
+        _restarting = true;
+
+        // The drift is only observable here, right before it is wiped: what easinput remembers
+        // beside what the system actually reports.
+        Log.Warn($"Restart: {_controller?.DescribeState() ?? "controller unavailable"}");
+
+        var released = ReleaseMutex();
+        try
+        {
+            StartRestartedInstance();
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Restart failed, staying up: {ex.GetType().Name}: {ex.Message}");
+            ReclaimMutex(released);
+            _tray?.Notify("重启失败", "旧的 easinput 仍在运行，可以再试一次或直接退出。");
+            _restarting = false;
+            return;
+        }
+
+        // Report liveness at warning level: a false return proves Windows had already dropped the
+        // hook after a timeout, which is one of the two known sources of drift.
+        _keyboard?.Unhook(reportAtWarningLevel: true);
+        _foreground?.Unhook(reportAtWarningLevel: true);
+
+        Log.Info("Restart handed off; exiting.");
+        Shutdown();
+    }
+
+    /// <summary>
+    /// Acquires the single-instance mutex. A restarted instance can arrive before the old process
+    /// has finished exiting, so it waits for the handoff instead of showing the "already running"
+    /// balloon and quitting — which would leave the user with no easinput at all.
+    /// </summary>
+    private static Mutex? AcquireMutex(bool waitForHandoff, out bool owned)
+    {
+        owned = false;
+        var deadline = Environment.TickCount64 + (waitForHandoff ? RestartHandoffMs : 0);
+        while (true)
+        {
+            var mutex = new Mutex(initiallyOwned: true, MutexName, out var createdNew);
+            if (createdNew)
+            {
+                owned = true;
+                return mutex;
+            }
+
+            mutex.Dispose();
+            if (Environment.TickCount64 >= deadline)
+            {
+                return null;
+            }
+
+            Thread.Sleep(50);
+        }
+    }
+
+    /// <summary>
+    /// Frees the single-instance mutex before the new process starts, so the handoff cannot be
+    /// mistaken for a second launch. Returns false when there was nothing to release.
+    /// </summary>
+    private bool ReleaseMutex()
+    {
+        if (_mutex is null)
+        {
+            return false;
+        }
+
+        if (_ownsMutex)
+        {
+            try
+            {
+                _mutex.ReleaseMutex();
+            }
+            catch (ApplicationException)
+            {
+                // Not owned on this thread; dropping the handle is enough.
+            }
+        }
+
+        _mutex.Dispose();
+        _mutex = null;
+        _ownsMutex = false;
+        return true;
+    }
+
+    private void ReclaimMutex(bool released)
+    {
+        if (!released)
+        {
+            return;
+        }
+
+        try
+        {
+            var mutex = new Mutex(initiallyOwned: true, MutexName, out var createdNew);
+            if (createdNew)
+            {
+                _mutex = mutex;
+                _ownsMutex = true;
+                return;
+            }
+
+            // Something else claimed the singleton in the gap; OnExit then has nothing to release.
+            mutex.Dispose();
+            Log.Warn("Another instance claimed the mutex after the failed restart.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Mutex reclaim failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Starts this executable again, carrying the original arguments so switches and modes survive.
+    /// Throws when the child could not be started; the caller decides what to do about it.
+    /// </summary>
+    private static void StartRestartedInstance()
+    {
+        var executable = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(executable))
+        {
+            throw new InvalidOperationException("Environment.ProcessPath is empty.");
+        }
+
+        var startInfo = new ProcessStartInfo(executable) { UseShellExecute = false };
+        var commandLine = Environment.GetCommandLineArgs();
+
+        // `dotnet EasInput.App.dll` and similar hosts need the managed entry point passed back.
+        if (string.Equals(
+                System.IO.Path.GetFileNameWithoutExtension(executable),
+                "dotnet",
+                StringComparison.OrdinalIgnoreCase) &&
+            commandLine.Length > 1)
+        {
+            startInfo.ArgumentList.Add(commandLine[0]);
+        }
+
+        foreach (var argument in commandLine.Skip(1))
+        {
+            if (!argument.Equals(RestartArgument, StringComparison.OrdinalIgnoreCase))
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+        }
+
+        startInfo.ArgumentList.Add(RestartArgument);
+
+        using var child = Process.Start(startInfo) ??
+                          throw new InvalidOperationException("Process.Start returned null.");
     }
 
     /// <summary>

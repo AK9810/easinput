@@ -31,19 +31,46 @@ public sealed class ForegroundWatcher : IDisposable
         return _hook != IntPtr.Zero;
     }
 
-    public void Dispose()
+    /// <summary>
+    /// Removes both WinEvent hooks and reports whether Windows still knew about each. A false
+    /// return means that hook was already gone, the same silent timeout that kills the keyboard
+    /// hook. Idempotent.
+    /// </summary>
+    public bool Unhook(bool reportAtWarningLevel = false)
     {
-        if (_hook != IntPtr.Zero)
+        // Second call (the restart uninstalls explicitly, then Dispose runs): nothing left to say.
+        if (_hook == IntPtr.Zero && _minimizeHook == IntPtr.Zero)
         {
-            WindowInterop.UnhookWinEvent(_hook);
-            _hook = IntPtr.Zero;
+            return true;
         }
 
-        if (_minimizeHook != IntPtr.Zero)
+        var foreground = UnhookOne(ref _hook);
+        var minimize = UnhookOne(ref _minimizeHook);
+
+        if (reportAtWarningLevel || !foreground || !minimize)
         {
-            WindowInterop.UnhookWinEvent(_minimizeHook);
-            _minimizeHook = IntPtr.Zero;
+            Log.Warn($"Foreground hooks: removed={foreground}/{minimize}.");
         }
+        else
+        {
+            Log.Debug("Foreground hooks: removed cleanly.");
+        }
+
+        return foreground;
+    }
+
+    public void Dispose() => Unhook();
+
+    private static bool UnhookOne(ref IntPtr hook)
+    {
+        if (hook == IntPtr.Zero)
+        {
+            return true;
+        }
+
+        var removed = WindowInterop.UnhookWinEvent(hook);
+        hook = IntPtr.Zero;
+        return removed;
     }
 
     private void OnWinEvent(

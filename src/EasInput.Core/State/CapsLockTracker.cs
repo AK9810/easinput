@@ -28,11 +28,21 @@ public sealed class CapsLockTracker
             return;
         }
 
+        _locked = ReadSystemLocked();
+        _seeded = true;
+    }
+
+    /// <summary>
+    /// The authoritative toggle state, read straight from the system without touching the tracked
+    /// value. The two diverge when a Caps Lock edge is missed — the drift only a process restart
+    /// cures. Must be called on a thread that pumps messages; other threads see a stale queue.
+    /// </summary>
+    public static bool ReadSystemLocked()
+    {
         // GetKeyState's low bit is the documented toggle state. GetAsyncKeyState's low bit means
         // "pressed since the previous call", which is not a toggle state and produces false
         // positives in a fresh process, so it must not be OR-ed in here.
-        _locked = (NativeMethods.GetKeyState(NativeMethods.VkCapital) & 1) != 0;
-        _seeded = true;
+        return (NativeMethods.GetKeyState(NativeMethods.VkCapital) & 1) != 0;
     }
 
     public void OnKeyDown(int virtualKey)

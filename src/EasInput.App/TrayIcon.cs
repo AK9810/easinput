@@ -22,6 +22,7 @@ public sealed class TrayIcon : IDisposable
         Action<bool> enabledChanged,
         Action<bool> autostartChanged,
         Action openConfig,
+        Action restart,
         Action exit)
     {
         _enabled = new ToolStripMenuItem("启用提示")
@@ -44,6 +45,7 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add(_autostart);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("打开配置文件", null, (_, _) => openConfig()));
+        menu.Items.Add(new ToolStripMenuItem("重启", null, (_, _) => restart()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("退出", null, (_, _) => exit()));
 

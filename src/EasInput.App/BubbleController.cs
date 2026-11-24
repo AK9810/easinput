@@ -61,6 +61,23 @@ public sealed class BubbleController : IDisposable
     /// <summary>True while an anchor resolve may still produce a bubble; a keypress must cancel it.</summary>
     public bool IsShowPending => _showPending;
 
+    /// <summary>
+    /// Snapshot of the in-memory state a restart wipes. Written to the log by the tray's restart,
+    /// because that moment is the only chance to observe the drift: the tracked Caps Lock value
+    /// beside the authoritative one, and the mode/window the trigger policy remembers.
+    /// Must be called on the UI thread — <c>GetKeyState</c> is only trustworthy there.
+    /// </summary>
+    public string DescribeState()
+    {
+        // Whatever had focus at the click; with the tray menu open this may be the menu itself.
+        var foreground = NativeMethods.GetForegroundWindow();
+        return $"capsTracked={_caps.IsLocked} capsSystem={CapsLockTracker.ReadSystemLocked()} " +
+               $"seeded={_triggers.IsSeeded} mode={_triggers.CurrentMode} " +
+               $"hwnd=0x{_triggers.CurrentWindow.ToInt64():X} " +
+               $"foregroundNow=0x{foreground.ToInt64():X} " +
+               $"enabled={_config.Enabled} showPending={_showPending}";
+    }
+
     public void Start()
     {
         _caps.Seed();
